@@ -1,6 +1,6 @@
-# Sistema de alerta y seguimiento para emergencias médicas en México
+# Pulso — sistema de alerta y seguimiento para emergencias médicas en México
 
-**Estado:** guía de implementación v0.6 · 24 de septiembre de 2026  
+**Estado:** guía de implementación v0.7 · 24 de septiembre de 2026  
 **Ámbito:** demo real en Ciudad de México, entrega el 25 de septiembre de 2026; una persona desarrollará el proyecto. Se usará ESP32-WROOM-32 con pulsador mecánico simple, 2–5 participantes y familiares. Para mañana se requiere Wi-Fi y energía disponibles.
 
 > Este documento describe una propuesta técnica y de producto. Una alerta por correo o en el panel no equivale a un reporte recibido por el 911. El equipo no tiene convenio con autoridades: un familiar designado llamará al 911 cuando corresponda y registrará esa acción. En Ciudad de México, el 911 atiende y canaliza urgencias médicas las 24 horas. [Fuente oficial CDMX](https://bomberos.cdmx.gob.mx/servicios/servicio/Emergencias-9-1-1).
@@ -69,17 +69,9 @@ Una persona puede necesitar ayuda y no tener el teléfono al alcance. El botón 
 | Cadena | Se observa transacción en testnet y coincide con el evento interno | Porcentaje de eventos anclados y retraso |
 | Diario | Se completa en pocos pasos y se puede omitir | Tasa de finalización y abandono |
 
-### 1.6 Nombre e identidad verbal propuestos
+### 1.6 Nombre e identidad verbal
 
-**Nombre de trabajo recomendado: AvisaCerca.** Es corto, se puede decir por teléfono y comunica la acción central: avisar a personas cercanas. Mensaje breve: **«Pide ayuda a quienes están cerca de ti»**. En la interfaz usar siempre verbos directos: «Pedir ayuda», «Avisar a mi familia», «Confirmar que recibí la alerta».
-
-| Opción | Qué comunica | Observación |
-|---|---|---|
-| **AvisaCerca** | Aviso y red familiar | Recomendada para la demo; no promete diagnóstico ni ambulancia |
-| **PulsoCerca** | Cuidado cotidiano y cercanía | Puede sugerir que el dispositivo mide pulso; aclarar que el MVP solo tiene un botón |
-| **FaroCerca** | Guía y acompañamiento | Más distintiva, pero requiere explicar su relación con emergencias |
-
-Los nombres son propuestas creativas, **no una validación de marca o dominio**. Antes de hacer una marca pública permanente, comprobar registro, dominio y cuentas sociales. Evitar nombres que sugieran afiliación oficial con 911 o servicios médicos.
+**Nombre elegido por el equipo: Pulso.** Mensaje breve propuesto: **«Tu red de apoyo en un toque»**. En la interfaz usar siempre verbos directos: «Pedir ayuda», «Avisar a mi familia», «Confirmar que recibí la alerta». El MVP no mide la frecuencia cardiaca: «Pulso» es el nombre del proyecto, no una promesa de sensor biométrico. Antes de hacer una marca pública permanente, comprobar registro, dominio y cuentas sociales. Evitar mensajes que sugieran afiliación oficial con 911 o servicios médicos.
 
 ## 2. Flujos de extremo a extremo
 
@@ -261,15 +253,43 @@ audit_log(id, actor_id, action, object_type, object_id, at)
 
 ### 4.5 Contrato Stellar propuesto
 
-**Propósito:** evidenciar apertura y cambios de estado de incidentes sin revelar identidad o salud.
+**Propósito:** dejar una constancia verificable de que Pulso registró la apertura, el acuse familiar y el cierre de un incidente. Stellar es una cadena pública: cualquiera puede ver transacciones y eventos; por eso el contrato no debe recibir datos personales ni clínicos. [Privacidad en Stellar](https://developers.stellar.org/docs/build/apps/privacy).
+
+#### Datos visibles en Stellar testnet
+
+| Campo | Tipo sugerido | Finalidad | Quién lo genera |
+|---|---|---|---|
+| `case_key` | 32 bytes aleatorios | Identificar el incidente sin exponer el ID interno ni a la persona | Backend |
+| `seq` | Entero creciente | Ordenar eventos y rechazar duplicados | Backend/contrato |
+| `event_code` | Enum corto: `OPENED`, `FAMILY_ACK`, `CLOSED`, `FALSE_ALARM` | Ver la etapa general del incidente | Backend |
+| `commitment` | SHA-256 de `version || case_key || seq || event_code || registro_canonico || nonce` | Probar que el registro privado no cambió | Backend, con `nonce` aleatorio de 32 bytes por evento |
+| Cuenta firmante | Dirección Stellar de servicio | Autorizar la escritura y pagar comisiones | Proyecto Pulso |
+| `contract_id`, `tx_hash`, ledger y hora de cierre de ledger | Metadatos de la red | Consultar y verificar cada anclaje | Stellar |
+
+El `nonce`, el registro completo y el vínculo `case_key ↔ persona` permanecen **fuera de cadena**. Para una auditoría, Pulso entrega a una persona autorizada el registro y su `nonce`; esa persona recalcula el hash y lo compara con `commitment`. No usar un hash directo del nombre, correo, domicilio o respuestas de salud: esos valores pueden adivinarse. El `event_code` y la hora de la transacción siguen siendo públicos, así que el esquema reduce exposición pero no ofrece anonimato total.
+
+#### Funciones y reglas del contrato
 
 ```text
-open_incident(incident_key, commitment) -> event IncidentOpened
-record_transition(incident_key, seq, state_code, commitment) -> event StateRecorded
-close_incident(incident_key, seq, commitment) -> event IncidentClosed
+initialize(admin_address)
+record_event(case_key, seq, event_code, commitment)
+get_case_state(case_key) -> (last_seq, closed)
 ```
 
-Solo una cuenta de servicio autorizada puede emitir transiciones; el contrato rechaza secuencias repetidas o retrocesos de estado. En testnet, un indexador consulta eventos y guarda `tx_hash` y `ledger` en `chain_anchors`. El envío de correos se ejecuta aunque falle la red Stellar. Definir después si el contrato necesita estado persistente; Stellar tiene almacenamiento con TTL y los eventos se consultan con RPC/indexador. [Eventos](https://developers.stellar.org/docs/build/smart-contracts/example-contracts/events), [ingesta](https://developers.stellar.org/docs/build/guides/events/ingest), [almacenamiento](https://developers.stellar.org/docs/build/guides/storage/storage-strategies).
+- `initialize` configura la cuenta de servicio autorizada una sola vez.
+- `record_event` exige autorización de esa cuenta (`require_auth()`), `seq = last_seq + 1` y que el caso no esté cerrado. `OPENED` solo se acepta con `seq = 1`; `CLOSED` y `FALSE_ALARM` cierran el caso. Publica un evento con los cuatro campos de la tabla. [Autorización Stellar](https://developers.stellar.org/docs/build/guides/auth/contract-authorization), [eventos](https://developers.stellar.org/docs/build/smart-contracts/example-contracts/events).
+- El contrato guarda solo `last_seq` y `closed` por `case_key` para impedir repeticiones. Ese estado tiene TTL en Stellar y requiere estrategia de extensión/restauración si se necesita consultar a largo plazo. [Archivo de estado](https://developers.stellar.org/docs/learn/fundamentals/contract-development/storage/state-archival).
+- Una cuenta del backend firma las transacciones: el ESP32 y los familiares **no esperan una wallet ni una confirmación de Stellar** para pedir o atender ayuda. Pollar identifica a las personas en la web; las cuentas embebidas no son requisito para activar el botón.
+
+#### Datos que nunca van al contrato
+
+Nombre, correo, teléfono, dirección, coordenadas, diagnósticos, medicamentos, respuestas diarias, texto del incidente, contacto familiar, folio del 911, fotografías, dirección de la wallet personal creada por Pollar o identificadores internos de la base de datos.
+
+#### Relación con el backend y límites de la prueba
+
+El backend guarda el incidente y envía avisos primero; luego coloca el anclaje en una cola independiente. En `chain_anchors` conserva `case_key`, `seq`, `commitment`, `tx_hash`, ledger y estado del reintento. Si Stellar falla, el aviso familiar continúa y el anclaje se reintenta. Stellar prueba que **un compromiso de datos fue registrado a más tardar al cierre de ese ledger**; no prueba que ocurrió una emergencia, que el correo se entregó ni que se llamó al 911. Esos hechos requieren registros y confirmaciones externas.
+
+Para historial más largo, guardar los eventos y `tx_hash` en la base de datos o un indexador: `getEvents` de Stellar RPC conserva una ventana reciente, normalmente alrededor de siete días. [Ingesta de eventos](https://developers.stellar.org/docs/build/guides/events/ingest), [referencia `getEvents`](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods/getEvents).
 
 ### 4.6 Conexión real del botón con ESP32
 
@@ -365,6 +385,7 @@ El alcance demostrable debe ser **un ESP32 y un botón físico, 2–5 personas u
 - [Ley Federal de Protección de Datos Personales en Posesión de los Particulares, texto vigente](https://www.ordenjuridico.gob.mx/Documentos/Federal/html/wo125102.html)
 - [Pollar SDK](https://github.com/pollar-xyz/pollar) y [ejemplo Next.js](https://github.com/pollar-xyz/pollar-docs/blob/main/docs/getting-started/example-app.md)
 - [Stellar: eventos de contratos](https://developers.stellar.org/docs/build/smart-contracts/example-contracts/events) y [estrategias de almacenamiento](https://developers.stellar.org/docs/build/guides/storage/storage-strategies)
+- [Stellar: privacidad en cadena pública](https://developers.stellar.org/docs/build/apps/privacy), [autorización](https://developers.stellar.org/docs/build/guides/auth/contract-authorization) y [consulta de eventos](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods/getEvents)
 - [Google: enviar correo con Gmail API](https://developers.google.com/workspace/gmail/api/guides/sending) y [manejo de errores](https://developers.google.com/workspace/gmail/api/guides/handle-errors)
 - [Vercel Queues](https://vercel.com/docs/queues/concepts) y [límites de cron](https://vercel.com/docs/cron-jobs/usage-and-pricing)
 - [W3C WCAG 2.2](https://www.w3.org/TR/wcag/)
