@@ -1,0 +1,16 @@
+{
+  "name": "pulso",
+  "private": true,
+  "description": "Pulso monorepo — web en apps/web, firmware/ y contracts/",
+  "scripts": {
+    "dev": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
+    "lint": "npm run lint --prefix apps/web",
+    "db:generate": "npm run db:generate --prefix apps/web",
+    "db:push": "npm run db:push --prefix apps/web",
+    "db:seed": "npm run db:seed --prefix apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

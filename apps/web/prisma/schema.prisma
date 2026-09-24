@@ -1,0 +1,257 @@
+// Pulso — modelo mínimo (PDR/TRD §4.3)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  FAMILY
+  ADMIN
+}
+
+enum DeviceStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+enum SourceChannel {
+  esp32
+  web
+}
+
+enum IncidentStatus {
+  created
+  family_acknowledged
+  contacting
+  resolved
+  false_alarm
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  failed
+  acknowledged
+}
+
+enum ContactRequestStatus {
+  open
+  acknowledged
+  closed
+}
+
+enum ChainAnchorStatus {
+  pending
+  submitted
+  confirmed
+  failed
+}
+
+model User {
+  id            String   @id @default(cuid())
+  pollarSubject String?  @unique @map("pollar_subject")
+  role          Role     @default(USER)
+  email         String   @unique
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  profile          Profile?
+  contacts         Contact[]
+  devices          Device[]
+  incidents        Incident[]
+  dailyCheckins    DailyCheckin[]
+  contactRequests  ContactRequest[]
+  auditLogs        AuditLog[]        @relation("AuditActor")
+
+  @@map("users")
+}
+
+model Profile {
+  userId          String  @id @map("user_id")
+  displayName     String  @map("display_name")
+  phone           String?
+  addressEncrypted String? @map("address_encrypted")
+  consentVersion  String  @map("consent_version")
+  isDemoIdentity  Boolean @default(true) @map("is_demo_identity")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Contact {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  name           String
+  email          String
+  relationship   String
+  isPrimary      Boolean   @default(false) @map("is_primary")
+  isBackup       Boolean   @default(false) @map("is_backup")
+  verifiedAt     DateTime? @map("verified_at")
+  permissions    String    @default("ack,view_incident") // CSV MVP
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@index([userId])
+  @@map("contacts")
+}
+
+model Device {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  publicId    String       @unique @map("public_id")
+  secretRef   String       @map("secret_ref")
+  lastCounter BigInt       @default(0) @map("last_counter")
+  lastSeenAt  DateTime?    @map("last_seen_at")
+  status      DeviceStatus @default(PENDING)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events   DeviceEvent[]
+  incidents Incident[]
+
+  @@index([userId])
+  @@map("devices")
+}
+
+model DeviceEvent {
+  id                  String        @id @default(cuid())
+  deviceId            String        @map("device_id")
+  eventId             String        @unique @map("event_id")
+  counter             BigInt
+  devicePressedAtUtc  DateTime?     @map("device_pressed_at_utc")
+  serverReceivedAtUtc DateTime      @default(now()) @map("server_received_at_utc")
+  sourceIpEncrypted   String?       @map("source_ip_encrypted")
+  sourceChannel       SourceChannel @map("source_channel")
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, counter])
+  @@map("device_events")
+}
+
+model Incident {
+  id                     String         @id @default(cuid())
+  userId                 String         @map("user_id")
+  deviceId               String?        @map("device_id")
+  status                 IncidentStatus @default(created)
+  openedAtUtc            DateTime       @default(now()) @map("opened_at_utc")
+  closedAtUtc            DateTime?      @map("closed_at_utc")
+  addressSnapshotEncrypted String?      @map("address_snapshot_encrypted")
+  caseKey                String         @unique @map("case_key") // seudónimo para Stellar
+  isSimulation           Boolean        @default(true) @map("is_simulation")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device        Device?        @relation(fields: [deviceId], references: [id])
+  events        IncidentEvent[]
+  notifications Notification[]
+  chainAnchors  ChainAnchor[]
+
+  @@index([userId, status])
+  @@map("incidents")
+}
+
+model IncidentEvent {
+  id                  String   @id @default(cuid())
+  incidentId          String   @map("incident_id")
+  seq                 Int
+  type                String
+  actorId             String?  @map("actor_id")
+  serverReceivedAtUtc DateTime @default(now()) @map("server_received_at_utc")
+  metadataPrivate     String?  @map("metadata_private") // JSON cifrado/privado
+
+  incident     Incident      @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  chainAnchors ChainAnchor[]
+
+  @@unique([incidentId, seq])
+  @@map("incident_events")
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  incidentId String             @map("incident_id")
+  contactId  String             @map("contact_id")
+  channel    String             @default("email")
+  status     NotificationStatus @default(queued)
+  attempts   Int                @default(0)
+  providerId String?            @map("provider_id")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@map("notifications")
+}
+
+model DailyCheckin {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  localDay      DateTime  @map("local_day") @db.Date
+  answersEncrypted String @map("answers_encrypted")
+  scoreVersion  String?   @map("score_version")
+  score0100     Int?      @map("score_0_100")
+  completedAtUtc DateTime? @map("completed_at_utc")
+  shareScope    String    @default("self") @map("share_scope")
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contactRequests ContactRequest[]
+
+  @@unique([userId, localDay])
+  @@map("daily_checkins")
+}
+
+model ContactRequest {
+  id               String               @id @default(cuid())
+  userId           String               @map("user_id")
+  checkinId        String?              @map("checkin_id")
+  status           ContactRequestStatus @default(open)
+  createdAtUtc     DateTime             @default(now()) @map("created_at_utc")
+  acknowledgedAtUtc DateTime?           @map("acknowledged_at_utc")
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkin DailyCheckin? @relation(fields: [checkinId], references: [id])
+
+  @@map("contact_requests")
+}
+
+model ChainAnchor {
+  id                 String            @id @default(cuid())
+  incidentEventId    String            @map("incident_event_id")
+  incidentId         String            @map("incident_id")
+  txHash             String?           @map("tx_hash")
+  network            String            @default("testnet")
+  ledgerClosedAtUtc  DateTime?         @map("ledger_closed_at_utc")
+  status             ChainAnchorStatus @default(pending)
+  retries            Int               @default(0)
+  commitment         String?
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  incidentEvent IncidentEvent @relation(fields: [incidentEventId], references: [id], onDelete: Cascade)
+  incident      Incident      @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId, status])
+  @@map("chain_anchors")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  objectType String   @map("object_type")
+  objectId   String   @map("object_id")
+  at         DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([objectType, objectId])
+  @@map("audit_log")
+}
