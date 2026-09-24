@@ -1,6 +1,6 @@
 # Pulso — sistema de alerta y seguimiento para emergencias médicas en México
 
-**Estado:** guía de implementación v0.8 · 24 de septiembre de 2026  
+**Estado:** guía de implementación v0.9 · 24 de septiembre de 2026  
 **Ámbito:** demo real en Ciudad de México, entrega el 25 de septiembre de 2026; una persona desarrollará el proyecto. Se usará ESP32-WROOM-32 con pulsador mecánico simple, 2–5 participantes y familiares. Para mañana se requiere Wi-Fi y energía disponibles.
 
 > Este documento describe una propuesta técnica y de producto. Una alerta por correo o en el panel no equivale a un reporte recibido por el 911. El equipo no tiene convenio con autoridades: un familiar designado llamará al 911 cuando corresponda y registrará esa acción. En Ciudad de México, el 911 atiende y canaliza urgencias médicas las 24 horas. [Fuente oficial CDMX](https://bomberos.cdmx.gob.mx/servicios/servicio/Emergencias-9-1-1).
@@ -23,7 +23,7 @@
 - Piloto con 2–5 personas adultas que consienten, domicilio fijo, Wi-Fi y electricidad disponibles, y hasta tres contactos de confianza por persona. Un botón de contacto sencillo se conectará a la placa ESP32. El equipo promotor administra la plataforma, sin atribuirse una central de emergencias.
 - Interfaz **web** adaptable a teléfono y escritorio, con componentes reales y datos reales durante el piloto. El usuario no necesita operar una wallet para pedir ayuda.
 - Se demuestra contrato en **Stellar testnet**; ningún dato clínico, nombre, dirección, correo o coordenada se publica en cadena.
-- El sistema **no diagnostica** ni sustituye atención médica. El cuestionario es autorreporte y se muestra como tendencia personal, sin puntajes clínicos inventados.
+- El sistema **no diagnostica** ni sustituye atención médica. El cuestionario usa un índice propio de bienestar autorreportado, sin validación clínica: sirve para conversar sobre cambios personales, no para afirmar si alguien está sano ni para decidir una urgencia.
 
 ## 1. PDR: requisitos de producto
 
@@ -47,7 +47,7 @@ Una persona puede necesitar ayuda y no tener el teléfono al alcance. El botón 
 4. Envío de correo a contactos y panel familiar con estado del incidente y acuse manual.
 5. Pantalla de usuario con estado claro y opción web de «Necesito ayuda».
 6. Flujo de escalamiento por un familiar a llamada humana al 911 y bitácora de quién llamó, cuándo y resultado. **No mostrar «autoridad avisada» hasta que exista confirmación real.**
-7. Chequeo diario breve y visualización de respuestas históricas para la persona; permisos explícitos para compartir.
+7. Chequeo diario breve con preguntas, puntaje descriptivo de 0–100 e historial para la persona; permisos explícitos para compartir.
 8. Contrato Soroban en testnet que ancla eventos del incidente sin datos personales y permite verificar la secuencia.
 9. Despliegue web en Vercel con datos persistentes externos y monitoreo básico.
 
@@ -68,7 +68,7 @@ Una persona puede necesitar ayuda y no tener el teléfono al alcance. El botón 
 | Familiar | Puede acusar recibo y registrar llamada/acción con sello de tiempo | Tiempo hasta acuse y hasta primer contacto |
 | Persona | Ve estados comprensibles: «Alerta enviada», «En revisión», «Ayuda solicitada», «Cerrada» | Comprensión en prueba con usuarios |
 | Cadena | Se observa transacción en testnet y coincide con el evento interno | Porcentaje de eventos anclados y retraso |
-| Diario | Se completa en pocos pasos y se puede omitir | Tasa de finalización y abandono |
+| Diario | Se completa en pocos pasos, calcula el índice solo con respuestas completas y se puede omitir | Tasa de finalización, abandono y comprensión del puntaje |
 
 ### 1.6 Nombre e identidad verbal
 
@@ -88,7 +88,29 @@ Si falla Wi-Fi, el ESP32 señala que no pudo enviar (con LED o buzzer, si están
 
 ### 2.3 Chequeo diario
 
-Recordatorio opcional → preguntas breves de autorreporte (p. ej. «¿Cómo dormiste?», «¿Cómo te sientes hoy?», «¿Necesitas que te contacten?») → confirmación de guardado → historial simple con fecha → decisión explícita de compartir con cuidador. La respuesta «necesito que me contacten» abre una solicitud de contacto con estado propio; si se interpreta como emergencia, se ofrece activar la alerta.
+Recordatorio opcional → comprobación breve de señales de alarma → cinco preguntas de autorreporte, una por pantalla → pregunta de contacto → resumen con respuestas e índice descriptivo → confirmación de guardado → historial con fecha y tendencia personal → decisión explícita de compartir con cuidador. La respuesta «necesito que me contacten» abre una solicitud de contacto con estado propio. La alerta de emergencia se puede activar en cualquier momento, incluso antes de terminar el chequeo.
+
+### 2.4 Preguntas del chequeo diario e índice Pulso
+
+**Periodo:** hoy, salvo la primera pregunta, que se refiere a la noche anterior. Mostrar siempre «Puedes omitir este chequeo» y permitir «No sé / prefiero no responder». Para un puntaje comparable, solicitar las cinco respuestas puntuables; si falta alguna, guardar el chequeo como incompleto y mostrar «Sin puntaje hoy». Las opciones van de izquierda a derecha de menor a mayor bienestar; el valor numérico no tiene que mostrarse durante la respuesta.
+
+| ID | Pregunta visible para la persona | Opciones en orden de 0 a 4 puntos |
+|---|---|---|
+| S1 | ¿Qué tan descansada o descansado despertaste hoy? | Nada / Poco / Regular / Bien / Muy bien |
+| S2 | ¿Cuánta energía has tenido hoy? | Nada / Poca / Regular / Buena / Mucha |
+| S3 | ¿Cuánto te limitaron hoy el dolor o las molestias físicas? | Muchísimo / Bastante / Algo / Poco / Nada |
+| S4 | ¿Cómo ha estado tu ánimo hoy? | Muy mal / Mal / Regular / Bien / Muy bien |
+| S5 | ¿Qué tan fácil fue hacer tus actividades habituales hoy? | No pude / Muy difícil / Con dificultad / Casi normal / Como siempre |
+
+**Pregunta fuera del puntaje:** «¿Quieres que uno de tus contactos te llame hoy?» Sí / No. Si responde Sí, crear una solicitud de contacto y avisar al familiar autorizado; no etiquetarla como emergencia por defecto.
+
+**Señales de alarma fuera del puntaje:** antes de las preguntas mostrar «¿Tienes ahora dificultad para respirar, dolor o presión en el pecho que no cede, confusión repentina, debilidad repentina de un lado del cuerpo o no puedes mantenerte despierta o despierto?» Sí / No / No estoy seguro. Si responde Sí o No estoy seguro, mostrar de inmediato «Pide ayuda ahora» y «Llamar al 911», con opción de activar la alerta familiar. No esperar al cálculo del índice ni presentar el puntaje como tranquilizador. Estos ejemplos de señales urgentes están respaldados por [CDC: síntomas de infarto](https://www.cdc.gov/heart-disease/about/heart-attack.html) y [CDC: señales de emergencia](https://stacks.cdc.gov/view/cdc/47667/cdc_47667_DS1.pdf); la lista no es exhaustiva.
+
+**Cálculo propuesto, versión `pulso_daily_v1`:** `puntaje = 5 × (S1 + S2 + S3 + S4 + S5)`, entero de 0 a 100. Un valor mayor significa que la persona **reportó sentirse mejor ese día** en estas cinco áreas. No es un diagnóstico, una probabilidad de enfermedad, una escala clínica validada ni una garantía de ausencia de urgencia. Mostrar «Tu bienestar reportado hoy: 65/100» y debajo «Compáralo con tus propios días; si te preocupa cómo te sientes, contacta a alguien de confianza o a un profesional». No usar colores o etiquetas «sano/enfermo» ni umbrales automáticos para decidir atención médica. Se puede mostrar la diferencia frente al promedio de los siete chequeos completos más recientes, solo cuando existan al menos tres días; indicar el número de días usados y no inferir causalidad. Nunca puntuar «No sé» como cero.
+
+**Ejemplo comprobable:** S1=3, S2=2, S3=4, S4=3 y S5=2 suman 14; el índice del día es `14 × 5 = 70/100`. Si S3 queda sin respuesta, se guardan las demás respuestas pero el índice del día queda vacío.
+
+La [escala WHO-5](https://www.who.int/publications/m/item/WHO-UCN-MSD-MHE-2024.01) mide bienestar mental durante **dos semanas**. Estas preguntas diarias de Pulso son una propuesta propia y no deben presentarse como WHO-5 ni heredar sus puntos de corte. Probar comprensión y utilidad del índice con usuarios antes de usarlo para cualquier decisión operativa.
 
 ## 3. UX/UI para personas adultas
 
@@ -107,7 +129,7 @@ Inicio de sesión
   └─ Alta y permisos
       └─ Inicio: [Necesito ayuda] [Chequeo de hoy] [Estado del dispositivo]
           ├─ Incidente activo → progreso, contactos avisados, botón Llamar al 911
-          ├─ Chequeo → una pregunta por paso → resumen → historial
+          ├─ Chequeo → señales de alarma → una pregunta por paso → contacto → resumen e índice → historial
           ├─ Contactos y permisos
           └─ Mi dispositivo → última conexión y prueba
 
@@ -154,8 +176,9 @@ Al pulsar «Necesito ayuda»:
 | Incidente | «Confirmo que recibí la alerta» (familiar) | Nombre y hora en cronología, visible para otros familiares | Permitir reintento sin crear acuses duplicados |
 | Incidente | «Ver detalles» | Mostrar fecha y hora local de recepción; separar «Pulsación estimada» si el reloj del dispositivo estaba sincronizado y «Registro en Stellar» si existe | Si falta hora del dispositivo o anclaje, indicar «No disponible»; nunca inventar una hora |
 | Incidente | «Llamé al 911» (familiar) | Pedir hora, resultado y folio opcional; mostrar «Llamada registrada» | Nunca marcar autoridad avisada solo por abrir `tel:911` |
-| Chequeo | «Siguiente» | Guardar respuesta local del paso y mostrar progreso «2 de 3» | Conservar respuestas si se interrumpe la sesión |
-| Chequeo | «Terminar» | Confirmación con fecha y resumen | Reintentar guardado sin duplicar entrada del día |
+| Chequeo | «Siguiente» | Guardar respuesta local del paso y mostrar progreso «2 de 5» | Conservar respuestas si se interrumpe la sesión |
+| Chequeo | «Terminar» | Confirmación con fecha, respuestas e índice o «Sin puntaje hoy» | Reintentar guardado sin duplicar entrada del día |
+| Chequeo | Responder Sí / No estoy seguro a señales de alarma | Mostrar «Pide ayuda ahora», «Llamar al 911» y alerta familiar sin esperar otras respuestas | Mantener visibles los medios de pedir ayuda si falla el guardado |
 | Dispositivo | «Probar conexión» | Señal de prueba etiquetada «Esto es una prueba» | Mostrar último contacto real y pasos de revisión |
 
 Los enlaces de correo llevan a una página con sesión requerida; el correo muestra el mínimo de información necesario. Para la demostración pública usar identidad y domicilio de prueba, aunque el dispositivo, el envío y la transacción sean reales.
@@ -222,7 +245,7 @@ flowchart LR
 | Incidentes | Máquina de estados y permisos | `created → family_acknowledged → contacting → resolved/false_alarm` |
 | Notificaciones | Fan-out a contactos, reintentos, trazabilidad | Estado por destinatario: queued/sent/failed/acknowledged |
 | Autenticación | OTP por correo con Pollar; sesión y wallet | Asociar identidad autenticada a rol interno |
-| Diario | Guardar respuestas y permisos de lectura | Entradas fechadas, editables conforme a política |
+| Diario | Guardar respuestas, versión y puntaje calculado en servidor; aplicar permisos de lectura | Una entrada por persona y día local, sin puntaje si faltan respuestas |
 | Stellar | Anclar secuencia de incidentes | Eventos con ID seudónimo, tipo de transición y compromiso criptográfico |
 
 La documentación pública de Pollar muestra OTP por correo y un ejemplo con Next.js/testnet, pero sus SDK y endpoints cambian; al implementar se fijará una versión compatible y se verificará la guía vigente. [SDK](https://github.com/pollar-xyz/pollar), [ejemplo Next.js](https://github.com/pollar-xyz/pollar-docs/blob/main/docs/getting-started/example-app.md).
@@ -238,12 +261,15 @@ device_events(id, device_id, event_id, counter, device_pressed_at_utc?, server_r
 incidents(id, user_id, device_id?, status, opened_at_utc, closed_at_utc?, address_snapshot_encrypted?)
 incident_events(id, incident_id, seq, type, actor_id?, server_received_at_utc, metadata_private)
 notifications(id, incident_id, contact_id, channel, status, attempts, provider_id?)
-daily_checkins(id, user_id, day, answers_encrypted, share_scope)
+daily_checkins(id, user_id, local_day, answers_encrypted, score_version, score_0_100?, completed_at_utc?, share_scope)
+contact_requests(id, user_id, checkin_id?, status, created_at_utc, acknowledged_at_utc?)
 chain_anchors(id, incident_event_id, tx_hash?, network, ledger_closed_at_utc?, status, retries)
 audit_log(id, actor_id, action, object_type, object_id, at)
 ```
 
 Índices únicos: `device_events.event_id`, `(device_id, counter)` y `(incident_id, seq)` para controlar reintentos. Los contactos se verifican antes de activarse. La ubicación inicial es el domicilio registrado; un ESP32 con Wi-Fi no produce una ubicación GPS confiable por sí mismo.
+
+Índice único adicional: `(user_id, local_day)` para que completar o editar el chequeo del día no cree duplicados. Calcular el índice en el servidor a partir de respuestas válidas y guardar `score_version`; al cambiar preguntas o fórmula, crear una versión nueva y no comparar automáticamente escalas distintas. `local_day` se calcula para `America/Mexico_City`; conservar `completed_at_utc` para auditoría. Respuestas y puntaje son datos de salud protegidos: la persona decide si comparte el resumen con su familiar; el administrador no los ve por defecto. No enviar respuestas ni puntaje a Stellar.
 
 **IP y tiempos del incidente.** La API toma `source_ip` de la solicitud entrante mediante el mecanismo confiable de Vercel, nunca de un campo enviado por el ESP32 o navegador. En el botón físico normalmente será la IP pública del router doméstico; en el botón web será la de la conexión del navegador. Puede cambiar, compartirse o reflejar una VPN; **no identifica con certeza a una persona ni proporciona una ubicación precisa**. Guardarla cifrada, con acceso restringido de auditoría y plazo de conservación definido en el aviso de privacidad; no incluirla en correos, panel familiar ni exploradores públicos. [Cabeceras de Vercel](https://vercel.com/docs/headers/request-headers), [función `ipAddress`](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package).
 
@@ -356,7 +382,7 @@ Antes de registrar a alguien, explicar que es un **prototipo de hackathon**, obt
 | T09 | Cola/outbox y correos con seguimiento de fallo | T08 | Se ve estado por destinatario; reintento idempotente |
 | T10 | Panel familiar y protocolo de llamada | T08 | Acuse, acciones y cierre quedan auditados |
 | T11 | Panel usuario accesible y estado del incidente | T05, T08 | Prueba de tareas con personas del grupo objetivo |
-| T12 | Chequeo diario y permisos de lectura | T02, T11 | Respuestas e historial visibles solo a autorizados |
+| T12 | Chequeo diario, índice `pulso_daily_v1` y permisos de lectura | T02, T11 | Cinco respuestas válidas producen 0–100; incompleto queda sin puntaje; señales de alarma ofrecen ayuda inmediata; historial solo para autorizados |
 | T13 | Contrato Soroban y pruebas en testnet | T08 | Apertura/transición/cierre con `server_received_at_unix` verificables en explorador |
 | T14 | Trabajador de anclaje y conciliación | T09, T13 | Fallo de Stellar no bloquea alertas; luego se recupera |
 | T15 | Prueba de extremo a extremo y simulacro | T07–T14 | Se demuestra botón → aviso → familiar → cierre → prueba en cadena |
@@ -375,7 +401,7 @@ El alcance demostrable debe ser **un ESP32 y un botón físico, 2–5 personas u
 | 4 | Botón físico ESP32 → API pública | núcleo de T07 | Pulsación crea el mismo tipo de incidente |
 | 5 | Pollar OTP | T05 | Usuario inicia sesión y accede solo a su caso |
 | 6 | Contrato simple en Stellar testnet y anclaje de apertura | núcleo de T13–T14 | `tx_hash` visible y asociado al incidente |
-| 7 | Chequeo diario de tres preguntas y cierre del caso | núcleo de T12 y T10 | Respuestas guardadas y cronología cerrada |
+| 7 | Chequeo diario de cinco preguntas, índice y cierre del caso | núcleo de T12 y T10 | Puntaje calculado en servidor, respuesta de alarma abre vía de ayuda y cronología queda cerrada |
 | 8 | Ensayo completo, capturas y plan de recuperación | T15 | Dos ejecuciones seguidas sin duplicados |
 
 **Si falta tiempo:** conservar el flujo botón físico → incidente → familiar → correo y la transacción testnet, porque demuestra hardware, utilidad y requisito Stellar. El cuestionario puede quedar como flujo web breve sin análisis avanzado. La provisión Wi-Fi por pantalla web, las notificaciones multicanal, el monitoreo continuo y el respaldo energético van a una segunda iteración. El despliegue de mañana no se presenta como servicio de emergencias operativo.
@@ -394,6 +420,7 @@ El alcance demostrable debe ser **un ESP32 y un botón físico, 2–5 personas u
 ## 7. Fuentes primarias consultadas
 
 - [Gobierno de México: uso del 911](https://www.gob.mx/sspc/es/articulos/sabes-cual-es-la-diferencia-entre-los-numeros-088-089-y-911)
+- [OMS: índice WHO-5, periodo de dos semanas](https://www.who.int/publications/m/item/WHO-UCN-MSD-MHE-2024.01) y [CDC: señales de emergencia en adultos](https://stacks.cdc.gov/view/cdc/47667/cdc_47667_DS1.pdf)
 - [Ley Federal de Protección de Datos Personales en Posesión de los Particulares, texto vigente](https://www.ordenjuridico.gob.mx/Documentos/Federal/html/wo125102.html)
 - [Pollar SDK](https://github.com/pollar-xyz/pollar) y [ejemplo Next.js](https://github.com/pollar-xyz/pollar-docs/blob/main/docs/getting-started/example-app.md)
 - [Stellar: eventos de contratos](https://developers.stellar.org/docs/build/smart-contracts/example-contracts/events) y [estrategias de almacenamiento](https://developers.stellar.org/docs/build/guides/storage/storage-strategies)
