@@ -1,6 +1,6 @@
 # Sistema de alerta y seguimiento para emergencias médicas en México
 
-**Estado:** guía de implementación v0.5 · 24 de septiembre de 2026  
+**Estado:** guía de implementación v0.6 · 24 de septiembre de 2026  
 **Ámbito:** demo real en Ciudad de México, entrega el 25 de septiembre de 2026; una persona desarrollará el proyecto. Se usará ESP32-WROOM-32 con pulsador mecánico simple, 2–5 participantes y familiares. Para mañana se requiere Wi-Fi y energía disponibles.
 
 > Este documento describe una propuesta técnica y de producto. Una alerta por correo o en el panel no equivale a un reporte recibido por el 911. El equipo no tiene convenio con autoridades: un familiar designado llamará al 911 cuando corresponda y registrará esa acción. En Ciudad de México, el 911 atiende y canaliza urgencias médicas las 24 horas. [Fuente oficial CDMX](https://bomberos.cdmx.gob.mx/servicios/servicio/Emergencias-9-1-1).
@@ -68,6 +68,18 @@ Una persona puede necesitar ayuda y no tener el teléfono al alcance. El botón 
 | Persona | Ve estados comprensibles: «Alerta enviada», «En revisión», «Ayuda solicitada», «Cerrada» | Comprensión en prueba con usuarios |
 | Cadena | Se observa transacción en testnet y coincide con el evento interno | Porcentaje de eventos anclados y retraso |
 | Diario | Se completa en pocos pasos y se puede omitir | Tasa de finalización y abandono |
+
+### 1.6 Nombre e identidad verbal propuestos
+
+**Nombre de trabajo recomendado: AvisaCerca.** Es corto, se puede decir por teléfono y comunica la acción central: avisar a personas cercanas. Mensaje breve: **«Pide ayuda a quienes están cerca de ti»**. En la interfaz usar siempre verbos directos: «Pedir ayuda», «Avisar a mi familia», «Confirmar que recibí la alerta».
+
+| Opción | Qué comunica | Observación |
+|---|---|---|
+| **AvisaCerca** | Aviso y red familiar | Recomendada para la demo; no promete diagnóstico ni ambulancia |
+| **PulsoCerca** | Cuidado cotidiano y cercanía | Puede sugerir que el dispositivo mide pulso; aclarar que el MVP solo tiene un botón |
+| **FaroCerca** | Guía y acompañamiento | Más distintiva, pero requiere explicar su relación con emergencias |
+
+Los nombres son propuestas creativas, **no una validación de marca o dominio**. Antes de hacer una marca pública permanente, comprobar registro, dominio y cuentas sociales. Evitar nombres que sugieran afiliación oficial con 911 o servicios médicos.
 
 ## 2. Flujos de extremo a extremo
 
@@ -153,6 +165,40 @@ Al pulsar «Necesito ayuda»:
 | Dispositivo | «Probar conexión» | Señal de prueba etiquetada «Esto es una prueba» | Mostrar último contacto real y pasos de revisión |
 
 Los enlaces de correo llevan a una página con sesión requerida; el correo muestra el mínimo de información necesario. Para la demostración pública usar identidad y domicilio de prueba, aunque el dispositivo, el envío y la transacción sean reales.
+
+### 3.5 Paleta y componentes para empezar a construir
+
+**Concepto visual:** tranquilidad en el uso diario; rojo reservado para pedir ayuda y para incidentes activos. La navegación y los cuestionarios usan verde petróleo y fondos claros. El estado nunca se comunica solo con color: siempre incluye texto e icono.
+
+| Token | Hex | Uso | Contraste de texto comprobado |
+|---|---|---|---|
+| `--color-background` | `#F7FAFC` | Fondo general | Texto `#172B4D`: **13.45:1** |
+| `--color-surface` | `#FFFFFF` | Tarjetas y formularios | Texto `#172B4D`: **14.10:1** |
+| `--color-text` | `#172B4D` | Texto principal | Sobre blanco: **14.10:1** |
+| `--color-text-secondary` | `#4B5563` | Texto secundario | Sobre blanco: **7.56:1** |
+| `--color-primary` | `#0D5C63` | Botones normales, enlaces destacados | Texto blanco: **7.70:1** |
+| `--color-danger` | `#B42318` | «Necesito ayuda», incidente activo | Texto blanco: **6.57:1** |
+| `--color-success` | `#146C43` | Confirmación recibida | Texto blanco: **6.45:1** |
+| `--color-focus` | `#1D4ED8` | Contorno de foco de teclado | Contra blanco: **6.70:1** |
+| `--color-border` | `#64748B` | Borde de campos y separadores importantes | Contra blanco: **4.76:1** |
+
+Estos valores se calcularon con la fórmula de luminancia de WCAG para los pares indicados; el contraste final se debe probar de nuevo sobre cada fondo real. WCAG AA pide al menos **4.5:1 para texto normal** y **3:1 para texto grande**. [Criterio W3C](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum).
+
+```css
+:root {
+  --color-background: #f7fafc;
+  --color-surface: #ffffff;
+  --color-text: #172b4d;
+  --color-text-secondary: #4b5563;
+  --color-primary: #0d5c63;
+  --color-danger: #b42318;
+  --color-success: #146c43;
+  --color-focus: #1d4ed8;
+  --color-border: #64748b;
+}
+```
+
+**Componentes base:** tipografía del sistema (sin descarga externa), texto de cuerpo de 18 px y altura de línea de 1.5; títulos de 28–32 px; botones de al menos 52 px de alto; controles separados al menos 12 px; tarjetas con borde visible y esquinas de 12 px. El botón «Necesito ayuda» debe ocupar todo el ancho útil en teléfono, con texto e icono, y permanecer en una posición predecible. No usar animaciones que retrasen el acuse de una alerta.
 
 ## 4. TRD: arquitectura técnica
 
