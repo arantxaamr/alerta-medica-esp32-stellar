@@ -1,18 +1,20 @@
 # Pulso — monorepo
 
-Sistema de alerta y seguimiento para emergencias médicas familiares (ESP32 + Pollar + Stellar). Demo piloto CDMX.
+Sistema de alerta y seguimiento para emergencias médicas familiares (teléfono + Pollar + Stellar; ESP32 opcional/futuro). Demo piloto CDMX.
 
 > Una alerta en correo o panel **no** equivale a un reporte recibido por el 911. Un familiar designado llama al 911 cuando corresponda.
 
-## Estructura
+**MVP actual:** pedir ayuda desde el teléfono (`/inicio` → Necesito ayuda). Guía para testers Android: [`docs/PHONE_SOS_TESTERS.md`](./docs/PHONE_SOS_TESTERS.md).
 
-El flujo de acceso por correo, consentimiento y vínculos familiares está descrito en [ACCESO_Y_VINCULOS.md](ACCESO_Y_VINCULOS.md).
+## Estructura
 
 ```text
 apps/web/          Next.js (API + paneles persona/familiar)
-firmware/          Arduino ESP32-DevKit V1 (pulsador + LED)
+apps/android/      Widget nativo «Necesito ayuda» (APK Kotlin, T18)
+firmware/          Arduino ESP32-DevKit V1 (pausado / opcional)
 contracts/         Contrato Soroban (Stellar testnet)
 PDR_TRD_*.md       Guía de producto y arquitectura
+docs/              Guías testers + tickets (SOS teléfono, widget)
 ```
 
 ## Stack
@@ -33,39 +35,61 @@ PDR_TRD_*.md       Guía de producto y arquitectura
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-2. Completa `DATABASE_URL` (Supabase), Pollar, Resend, `SESSION_SECRET` y `ADMIN_EMAILS`. Las claves Stellar se usarán en una etapa posterior.
+2. Completa `DATABASE_URL` (Supabase), claves Pollar, Resend y Stellar cuando las tengas.
 
 3. Instala y prepara Prisma:
 
 ```bash
 cd apps/web
-pnpm install --frozen-lockfile
-pnpm exec prisma generate
-pnpm exec prisma db push
+npm install
+npx prisma generate
+npx prisma db push
+npm run db:seed
 ```
 
 4. Desarrollo local:
 
 ```bash
-pnpm dev
+npm run dev
 # o desde la raíz:
 # npm run dev
 ```
 
-Health check: [http://localhost:3000/api/health](http://localhost:3000/api/health).
+Health check: [http://localhost:3000/api/health](http://localhost:3000/api/health)
 
 ## Vercel
 
-En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables de entorno desde `.env.example`. Autoriza el dominio HTTPS de Vercel en la aplicación Pollar antes de probar el acceso allí.
+En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables de entorno desde `.env.example`.
 
-## Modo simulacro
+## Auth (Pollar + sesión Pulso)
 
-Las alertas aún corren en **modo simulación**. El acceso puede registrar participantes reales que acepten el consentimiento del piloto, pero todavía no debe presentarse como servicio operativo de emergencias.
+1. Crea una app en [dashboard.pollar.xyz](https://dashboard.pollar.xyz) (testnet).
+2. Copia `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` y `POLLAR_SECRET_KEY` a `apps/web/.env.local`.
+3. El acceso por correo crea la sesión Pulso solo después de verificar una firma SEP-53 de la cartera vinculada por Pollar.
 
-## Documentación y demostración
+Roles por correo: `ADMIN_EMAILS`, `FAMILY_EMAILS` (lista separada por comas). El acceso demo solo se habilita de forma explícita en desarrollo con `DEMO_LOGIN_ENABLED=true` y nunca concede el rol administrador.
 
-- [PDR y TRD del piloto](./PDR_TRD_emergencias_MX.md)
-- [Especificación de landing e identidad](./LANDING_PULSO.md)
-- [White paper y canvas de negocio](./WHITEPAPER_PULSO.md)
+## Stellar testnet (Pulso Anchor)
 
-La ruta `/` presenta Pulso a familias y personas cuidadoras; `/demo` es una **vista previa temporal** de las dos pulsaciones físicas y la confirmación familiar posterior. Una sola pulsación no crea alerta. La demostración final deberá usar la ESP32 real, que se conectará después de terminar la landing. La vista previa actual no crea incidentes, envía correos ni contacta al 911.
+Contrato Soroban desplegado e inicializado con la cuenta `pulso-admin`.
+
+| Recurso | ID / enlace |
+|--------|-------------|
+| **Contract ID** | `CBOCHL4EFIVNPLVYXP6Y352CXAKDZ5PM53PTHJ2OR57UL7E2ZKGK273X` |
+| **Contrato (Stellar Expert)** | [Ver en testnet](https://stellar.expert/explorer/testnet/contract/CBOCHL4EFIVNPLVYXP6Y352CXAKDZ5PM53PTHJ2OR57UL7E2ZKGK273X) |
+| **Admin (`pulso-admin`)** | `GANLLWK2VI5O7FQXPJMGH55A6SYVUGT66GLSUZICPLGSIN6FHC73I2GE` |
+| **Cuenta admin (Stellar Expert)** | [Ver en testnet](https://stellar.expert/explorer/testnet/account/GANLLWK2VI5O7FQXPJMGH55A6SYVUGT66GLSUZICPLGSIN6FHC73I2GE) |
+
+Detalles de build/deploy: [`contracts/README.md`](./contracts/README.md).
+
+## Pendiente / aplazado
+
+- **ESP32 + Vercel + simulacro:** ver guía detallada [`TICKETS_PENDIENTES.md`](./TICKETS_PENDIENTES.md) (T03, T06–T08 E2E, T15–T17).
+
+Documentos del piloto en la app: `/protocolo` (T01), `/privacidad` (T02). Chequeo: `/chequeo` (T12).
+
+## Documentación
+
+- [`PDR_TRD_emergencias_MX.md`](./PDR_TRD_emergencias_MX.md) — producto y arquitectura
+- [`TICKETS_PENDIENTES.md`](./TICKETS_PENDIENTES.md) — tickets abiertos y plan ESP32 end-to-end
+- [`contracts/README.md`](./contracts/README.md) — Soroban testnet

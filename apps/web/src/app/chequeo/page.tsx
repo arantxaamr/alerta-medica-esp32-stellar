@@ -1,7 +1,13 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CheckinPreview } from "@/components/CheckinPreview";
-import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { requireSession } from "@/lib/session";
+import { AppHeader } from "@/components/SiteChrome";
+import { ChequeoClient } from "./ChequeoClient";
 
-export default function ChequeoPage() {
-  return <><SiteHeader /><main id="contenido" className="inner-page"><div className="shell inner-shell checkin-shell"><Link className="back-link" href="/">← Volver a Pulso</Link><div className="inner-intro"><p className="eyebrow">SEGUIMIENTO COTIDIANO</p><h1>Un momento para saber <em>cómo estás.</em></h1><p className="inner-lead">Un chequeo breve y voluntario para reconocer cambios y abrir una conversación con la familia.</p></div><div className="notice"><strong>Simulación privada.</strong> Las respuestas de esta página no se guardan ni se comparten.</div><CheckinPreview /><div className="checkin-explainer"><article><span>01</span><h3>Personal, no clínico</h3><p>El indicador resume cómo se percibe la persona. No predice enfermedades ni reemplaza una valoración médica.</p></article><article><span>02</span><h3>Una tendencia, no una sentencia</h3><p>La versión futura mostrará cambios entre días para ayudar a decidir cuándo conversar o pedir atención.</p></article><article><span>03</span><h3>Con consentimiento</h3><p>La persona decidirá qué responde y con quién comparte su información.</p></article></div><div className="page-actions"><Link href="/demo" className="button button-primary">Probar el botón Pulso ↗</Link><Link href="/acceso" className="button button-outline">Entrar al piloto</Link></div></div></main><SiteFooter /></>;
+export const dynamic = "force-dynamic";
+
+export default async function ChequeoPage() {
+  const session = await requireSession(["USER"]);
+  if (!session) redirect("/entrar");
+  return <><AppHeader role="USER" name={session.displayName || "Mi cuenta"} /><main id="contenido" className="app-main"><div className="shell task-shell"><p className="eyebrow">BIENESTAR COTIDIANO</p><h1>Tu chequeo de <em>hoy.</em></h1><p className="inner-lead">Responde una pregunta a la vez. Puedes omitir el chequeo; tu score describe cómo te sientes y no es un diagnóstico.</p><div className="notice"><strong>Tú tienes el control.</strong> Las respuestas solo se comparten según el alcance que elijas.</div><section className="info-panel task-card"><ChequeoClient /></section><Link href="/inicio" className="back-link task-back">← Volver a mi inicio</Link></div></main></>;
 }

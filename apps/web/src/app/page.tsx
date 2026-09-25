@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { requireSession } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
 
 const facts = [
   {
@@ -41,7 +45,11 @@ const questions = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await requireSession();
+  if (session?.role === "ADMIN") redirect("/admin");
+  if (session?.role === "FAMILY") redirect("/familiar");
+  if (session?.role === "USER") redirect("/inicio");
   return (
     <>
       <SiteHeader />
@@ -50,11 +58,11 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow"><span className="eyebrow-dot" /> PILOTO EN CIUDAD DE MÉXICO</p>
             <h1 id="hero-title">Más cerca cuando alguien <em>necesita ayuda.</em></h1>
-            <p className="hero-lead">Dos pulsaciones del botón en casa iniciarán una solicitud de ayuda. La red familiar podrá enterarse y saber quién responde.</p>
+            <p className="hero-lead">Dos pulsaciones del botón en casa iniciarán una solicitud de ayuda. Hoy puedes recorrer el mismo flujo desde el teléfono con tu red familiar.</p>
             <p className="hero-motto">Tu red de apoyo en dos toques.</p>
             <div className="hero-actions">
               <Link className="button button-primary" href="/demo">Ver demostración <span aria-hidden="true">↗</span></Link>
-              <Link className="button button-quiet" href="/acceso">Entrar al piloto <span aria-hidden="true">↗</span></Link>
+              <Link className="button button-quiet" href="/entrar">Entrar al piloto <span aria-hidden="true">↗</span></Link>
             </div>
             <a className="hero-scroll-link" href="#como-funciona">Descubre cómo funciona <span aria-hidden="true">↓</span></a>
             <p className="microcopy">Vista previa interactiva. La demostración con ESP32 real se conectará al final.</p>
@@ -86,7 +94,7 @@ export default function Home() {
               <article className="step-card"><span className="step-num">02</span><span className="step-symbol" aria-hidden="true">↗</span><h3>La red se entera</h3><p>La versión operativa enviará el aviso a familiares elegidos y verificados, con el estado visible para la red.</p></article>
               <article className="step-card"><span className="step-num">03</span><span className="step-symbol" aria-hidden="true">✓</span><h3>Alguien confirma</h3><p>Un familiar podrá indicar que atenderá. Los demás sabrán quién asumió la respuesta.</p></article>
             </div>
-            <p className="section-note">El envío y la confirmación reales aún están en construcción. <Link href="/demo">Explorar la vista previa →</Link></p>
+            <p className="section-note">El piloto web ya permite probar alertas, correos y confirmación familiar; la ESP32 se conectará en la última etapa. <Link href="/demo">Explorar la vista previa pública →</Link></p>
           </div>
         </section>
 
@@ -111,14 +119,14 @@ export default function Home() {
         <section className="section shell" id="cuidado" aria-labelledby="care-title">
           <div className="care-panel">
             <div className="care-art" aria-hidden="true"><div className="care-circle"><span>♡</span><div className="care-line"><i /><i /><i /><i /><i /></div></div><span className="care-spark spark-a">✳</span><span className="care-spark spark-b">✳</span></div>
-            <div className="care-copy"><p className="eyebrow">MÁS ALLÁ DE UNA ALERTA</p><h2 id="care-title">Cuidar también es <em>preguntar cómo estás.</em></h2><p>El chequeo diario propuesto ayudará a conversar sobre cambios en el bienestar. Será voluntario y no reemplazará una valoración médica.</p><Link className="button button-outline" href="/chequeo">Conocer el chequeo ↗</Link></div>
+            <div className="care-copy"><p className="eyebrow">MÁS ALLÁ DE UNA ALERTA</p><h2 id="care-title">Cuidar también es <em>preguntar cómo estás.</em></h2><p>El chequeo diario ayuda a conversar sobre cambios en el bienestar. Es voluntario y no reemplaza una valoración médica.</p><Link className="button button-outline" href="/entrar">Entrar al chequeo ↗</Link></div>
           </div>
         </section>
 
         <section className="section trust-section" id="confianza" aria-labelledby="trust-title">
           <div className="shell trust-grid">
             <div><p className="eyebrow">DISEÑADO CON RESPONSABILIDAD</p><h2 id="trust-title">La confianza se construye con <em>límites claros.</em></h2></div>
-            <div><p>Pulso está en desarrollo. La vista previa no envía mensajes reales. No tenemos convenio con autoridades ni conexión automática al 911. En una urgencia en México, un familiar debe llamar al 911.</p><p>El diseño de Stellar contempla registrar solo una prueba de integridad del incidente; los datos clínicos, correos, domicilios e IP quedarían fuera de la cadena.</p><a className="text-link" href="/WHITEPAPER_PULSO.md" download>Descargar el white paper (.md) ↗</a></div>
+            <div><p>Pulso está en desarrollo. La demostración pública no envía mensajes; el piloto autenticado puede enviar alertas de simulación únicamente a testers registrados. No tenemos convenio con autoridades ni conexión automática al 911.</p><p>Stellar registra una prueba de integridad del incidente; los datos clínicos, correos, domicilios e IP quedan fuera de la cadena.</p><a className="text-link" href="/WHITEPAPER_PULSO.md" download>Descargar el white paper (.md) ↗</a></div>
           </div>
         </section>
 

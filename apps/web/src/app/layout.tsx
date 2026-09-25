@@ -1,27 +1,41 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PulsoProviders } from "@/components/PulsoProviders";
 
 export const metadata: Metadata = {
   title: "Pulso | Tu red de apoyo en dos toques",
   description:
-    "Conoce la demostración de Pulso: una propuesta de alerta familiar con botón ESP32 y seguimiento cotidiano para hogares de Latinoamérica. Piloto en CDMX.",
+    "Alerta familiar y seguimiento cotidiano para hogares de Latinoamérica. Piloto en Ciudad de México.",
   applicationName: "Pulso",
-  icons: { icon: "/pulso-mark.svg" },
-  openGraph: {
-    type: "website",
-    locale: "es_MX",
-    siteName: "Pulso",
-    title: "Pulso | Tu red de apoyo en dos toques",
-    description: "Dos pulsaciones para pedir apoyo familiar desde casa. Conoce el proyecto Pulso y su piloto propuesto en CDMX.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Pulso",
+    statusBarStyle: "default",
   },
-  twitter: { card: "summary", title: "Pulso | Tu red de apoyo en dos toques" },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d5c63",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-MX" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background text-text">
-        {children}
+        <PulsoProviders>
+          {children}
+        </PulsoProviders>
       </body>
     </html>
   );

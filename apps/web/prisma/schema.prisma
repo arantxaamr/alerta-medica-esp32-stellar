@@ -14,11 +14,6 @@ enum Role {
   ADMIN
 }
 
-enum KycStatus {
-  pending
-  completed
-}
-
 enum DeviceStatus {
   PENDING
   ACTIVE
@@ -58,6 +53,11 @@ enum ChainAnchorStatus {
   failed
 }
 
+enum KycStatus {
+  pending
+  completed
+}
+
 model User {
   id            String   @id @default(cuid())
   pollarSubject String?  @unique @map("pollar_subject")
@@ -72,33 +72,8 @@ model User {
   dailyCheckins    DailyCheckin[]
   contactRequests  ContactRequest[]
   auditLogs        AuditLog[]        @relation("AuditActor")
-  appSessions      AppSession[]
 
   @@map("users")
-}
-
-model Profile {
-  userId          String  @id @map("user_id")
-  displayName     String  @map("display_name")
-  phone           String?
-  addressEncrypted String? @map("address_encrypted")
-  consentVersion  String  @map("consent_version")
-  consentAcceptedAt DateTime? @map("consent_accepted_at")
-  isDemoIdentity  Boolean @default(true) @map("is_demo_identity")
-  alcaldia        String?
-  colonia         String?
-  kyc_status      KycStatus @default(pending)
-  kyc_completed_at DateTime?
-  wallet_funded_at DateTime?
-  onboarding_step String @default("consent")
-  birth_year      Int?
-  accepts_not_911 Boolean @default(false)
-  accepts_privacy Boolean @default(false)
-  accepts_health_data Boolean @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("profiles")
 }
 
 model AuthAttempt {
@@ -120,39 +95,46 @@ model AuthAttempt {
   @@map("auth_attempts")
 }
 
-model AppSession {
-  id         String    @id @default(cuid())
-  userId     String    @map("user_id")
-  tokenHash  String    @unique @map("token_hash")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  expiresAt  DateTime  @map("expires_at")
-  revokedAt  DateTime? @map("revoked_at")
+model Profile {
+  userId           String    @id @map("user_id")
+  displayName      String    @map("display_name")
+  phone            String?
+  addressEncrypted String?   @map("address_encrypted")
+  colonia          String?
+  alcaldia         String?
+  birthYear        Int?      @map("birth_year")
+  consentVersion   String    @map("consent_version")
+  kycStatus        KycStatus @default(pending) @map("kyc_status")
+  kycCompletedAt   DateTime? @map("kyc_completed_at")
+  acceptsNot911    Boolean   @default(false) @map("accepts_not_911")
+  acceptsPrivacy   Boolean   @default(false) @map("accepts_privacy")
+  acceptsHealthData Boolean  @default(false) @map("accepts_health_data")
+  isDemoIdentity   Boolean   @default(true) @map("is_demo_identity")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, expiresAt])
-  @@map("app_sessions")
+  @@map("profiles")
 }
 
 model Contact {
-  id             String    @id @default(cuid())
-  userId         String    @map("user_id")
-  name           String
-  email          String
-  relationship   String
-  isPrimary      Boolean   @default(false) @map("is_primary")
-  isBackup       Boolean   @default(false) @map("is_backup")
-  verifiedAt     DateTime? @map("verified_at")
-  permissions    String    @default("ack,view_incident") // CSV MVP
-  createdAt      DateTime  @default(now()) @map("created_at")
-  phone          String?
-  invite_token   String?   @unique
-  invite_sent_at DateTime?
-  kyc_status     KycStatus @default(pending)
-  kyc_completed_at DateTime?
-  accepts_alerts Boolean @default(false)
-  accepts_call_911 Boolean @default(false)
-  accepts_privacy Boolean @default(false)
+  id               String     @id @default(cuid())
+  userId           String     @map("user_id")
+  name             String
+  email            String
+  phone            String?
+  relationship     String
+  isPrimary        Boolean    @default(false) @map("is_primary")
+  isBackup         Boolean    @default(false) @map("is_backup")
+  verifiedAt       DateTime?  @map("verified_at")
+  permissions      String     @default("ack,view_incident")
+  inviteToken      String?    @unique @map("invite_token")
+  inviteSentAt     DateTime?  @map("invite_sent_at")
+  kycStatus        KycStatus  @default(pending) @map("kyc_status")
+  kycCompletedAt   DateTime?  @map("kyc_completed_at")
+  acceptsAlerts    Boolean    @default(false) @map("accepts_alerts")
+  acceptsCall911   Boolean    @default(false) @map("accepts_call_911")
+  acceptsPrivacy   Boolean    @default(false) @map("accepts_privacy")
+  createdAt        DateTime   @default(now()) @map("created_at")
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications Notification[]

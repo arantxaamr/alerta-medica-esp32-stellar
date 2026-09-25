@@ -1,0 +1,8 @@
+import Link from "next/link";
+import { LoginForm } from "@/components/LoginForm";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+
+export default function EntrarPage() {
+  const pollarEnabled = Boolean(process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY);
+  return <><SiteHeader /><main id="contenido" className="auth-page"><div className="shell auth-layout"><section className="auth-story"><Link className="back-link" href="/">← Volver a Pulso</Link><p className="eyebrow">ACCESO AL PILOTO</p><h1>Tu red empieza <em>aquí.</em></h1><p className="inner-lead">Entra con tu correo. Pulso reconocerá si eres persona usuaria, familiar o parte del equipo del piloto.</p><div className="role-preview"><article><span>01</span><div><strong>Persona usuaria</strong><p>Completa su alta, organiza su red y solicita ayuda.</p></div></article><article><span>02</span><div><strong>Familiar o cuidador</strong><p>Acepta la invitación y responde a las alertas.</p></div></article><article><span>03</span><div><strong>Administración</strong><p>Supervisa el piloto con acceso restringido.</p></div></article></div><div className="security-note"><span>✓</span><p><strong>Acceso por correo con Pollar.</strong> Tu rol se asigna por invitación o por una cuenta previamente autorizada.</p></div></section><section className="auth-form-column"><div className="auth-form-header"><span className="secure-badge">● CONEXIÓN SEGURA</span><p>Código de un solo uso</p></div><LoginForm pollarEnabled={pollarEnabled} /><p className="auth-emergency">¿Es una emergencia real? <a href="tel:911">Llama al 911</a>. Pulso no sustituye a los servicios de emergencia.</p></section></div></main><SiteFooter /></>;
+}
