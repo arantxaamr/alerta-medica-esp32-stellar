@@ -6,7 +6,7 @@ export default function ChequeoPage() {
         Puedes omitir este chequeo. Flujo completo en T12.
       </p>
       <a
-        href="/"
+        href="/inicio"
         className="mt-8 flex min-h-[52px] items-center justify-center rounded-xl border border-border px-4 font-medium text-text"
       >
         Volver al inicio

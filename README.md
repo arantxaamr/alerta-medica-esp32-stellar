@@ -57,9 +57,18 @@ Health check: [http://localhost:3000/api/health](http://localhost:3000/api/healt
 
 En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables de entorno desde `.env.example`.
 
-## Modo simulacro
+## Auth (Pollar + sesión Pulso)
 
-Por defecto el producto corre en **modo prueba** (identidad y domicilio de demo). El paso a datos reales queda para cuando el producto madure (consentimiento, aviso de privacidad y tickets T01–T02).
+1. Crea una app en [dashboard.pollar.xyz](https://dashboard.pollar.xyz) (testnet).
+2. Copia `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` y `POLLAR_SECRET_KEY` a `apps/web/.env.local`.
+3. Sin claves aún, en `/entrar` usa **Acceso demo** (persona / familiar / admin).
+
+Roles por correo: `ADMIN_EMAILS`, `FAMILY_EMAILS` (lista separada por comas).
+
+## Pendiente / aplazado
+
+- **ESP32**: aplazado hasta KYC + cuestionarios reales (persona, familiar, admin).
+- **Stellar**: anclaje de incidentes en testnet (siguiente).
 
 ## Documentación
 

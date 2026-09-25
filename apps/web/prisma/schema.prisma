@@ -53,6 +53,11 @@ enum ChainAnchorStatus {
   failed
 }
 
+enum KycStatus {
+  pending
+  completed
+}
+
 model User {
   id            String   @id @default(cuid())
   pollarSubject String?  @unique @map("pollar_subject")
@@ -72,12 +77,20 @@ model User {
 }
 
 model Profile {
-  userId          String  @id @map("user_id")
-  displayName     String  @map("display_name")
-  phone           String?
-  addressEncrypted String? @map("address_encrypted")
-  consentVersion  String  @map("consent_version")
-  isDemoIdentity  Boolean @default(true) @map("is_demo_identity")
+  userId           String    @id @map("user_id")
+  displayName      String    @map("display_name")
+  phone            String?
+  addressEncrypted String?   @map("address_encrypted")
+  colonia          String?
+  alcaldia         String?
+  birthYear        Int?      @map("birth_year")
+  consentVersion   String    @map("consent_version")
+  kycStatus        KycStatus @default(pending) @map("kyc_status")
+  kycCompletedAt   DateTime? @map("kyc_completed_at")
+  acceptsNot911    Boolean   @default(false) @map("accepts_not_911")
+  acceptsPrivacy   Boolean   @default(false) @map("accepts_privacy")
+  acceptsHealthData Boolean  @default(false) @map("accepts_health_data")
+  isDemoIdentity   Boolean   @default(true) @map("is_demo_identity")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -85,16 +98,24 @@ model Profile {
 }
 
 model Contact {
-  id             String    @id @default(cuid())
-  userId         String    @map("user_id")
-  name           String
-  email          String
-  relationship   String
-  isPrimary      Boolean   @default(false) @map("is_primary")
-  isBackup       Boolean   @default(false) @map("is_backup")
-  verifiedAt     DateTime? @map("verified_at")
-  permissions    String    @default("ack,view_incident") // CSV MVP
-  createdAt      DateTime  @default(now()) @map("created_at")
+  id               String     @id @default(cuid())
+  userId           String     @map("user_id")
+  name             String
+  email            String
+  phone            String?
+  relationship     String
+  isPrimary        Boolean    @default(false) @map("is_primary")
+  isBackup         Boolean    @default(false) @map("is_backup")
+  verifiedAt       DateTime?  @map("verified_at")
+  permissions      String     @default("ack,view_incident")
+  inviteToken      String?    @unique @map("invite_token")
+  inviteSentAt     DateTime?  @map("invite_sent_at")
+  kycStatus        KycStatus  @default(pending) @map("kyc_status")
+  kycCompletedAt   DateTime?  @map("kyc_completed_at")
+  acceptsAlerts    Boolean    @default(false) @map("accepts_alerts")
+  acceptsCall911   Boolean    @default(false) @map("accepts_call_911")
+  acceptsPrivacy   Boolean    @default(false) @map("accepts_privacy")
+  createdAt        DateTime   @default(now()) @map("created_at")
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications Notification[]
