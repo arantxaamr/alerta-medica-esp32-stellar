@@ -3,10 +3,10 @@
 | Campo | Valor |
 |--------|--------|
 | **ID** | T18 |
-| **Estado** | Pendiente (después del MVP web/PWA) |
+| **Estado** | **Hecho (v1)** — código en `apps/android/`; falta TWA / Play / estados avanzados |
 | **Prioridad** | Media — no bloquea piloto con PWA |
 | **Depende de** | T11 (SOS web), T03 (URL HTTPS estable), sesión Pulso + familiares verificados |
-| **Rama sugerida** | `feature/android-sos-widget` (desde `main`) |
+| **Código** | [`apps/android/`](../apps/android/) + [README](../apps/android/README.md) |
 | **Relacionado** | [`PHONE_SOS_TESTERS.md`](./PHONE_SOS_TESTERS.md), atajo PWA actual |
 
 ---
@@ -108,31 +108,31 @@ No inventar un segundo flujo de alerta en Kotlin; el backend sigue siendo `POST 
 
 ## 5. Qué falta construir (checklist)
 
-### Proyecto Android
+### Proyecto Android (v1 en repo)
 
-- [ ] Módulo `apps/android/` (o repo `pulso-android`) con Kotlin + Gradle.
-- [ ] `minSdk` razonable (24+), target actual.
-- [ ] Application ID p. ej. `mx.pulso.app`.
-- [ ] Iconos launcher + preview del widget.
-- [ ] `AppWidgetProvider` + layout XML del botón rojo.
-- [ ] `PendingIntent` → deep link `/ayuda`.
-- [ ] Activity contenedora (Custom Tab / WebView / TWA).
-- [ ] Build release firmado (keystore **no** en git) + APK/AAB para testers.
-- [ ] README: cómo instalar el APK y cómo añadir el widget al home.
+- [x] Módulo `apps/android/` con Kotlin + Gradle.
+- [x] `minSdk` 26, target 35.
+- [x] Application ID `mx.pulso.app`.
+- [x] Icono launcher + preview del widget.
+- [x] `AppWidgetProvider` + layout XML del botón rojo.
+- [x] `PendingIntent` → deep link `/ayuda?from=widget`.
+- [x] Activity + Chrome Custom Tabs.
+- [ ] Build release firmado (keystore **no** en git) + APK/AAB para testers — generar en Android Studio.
+- [x] README: cómo instalar el APK y cómo añadir el widget al home.
 
-### Producto / backend (casi listo)
+### Producto / backend
 
 - [x] Flujo web `/inicio` → `/ayuda` → incidentes → correo familiar.
 - [x] Confirmación anti–toque accidental en `/ayuda`.
 - [x] Manifest PWA + atajo (parche mientras no hay widget).
-- [ ] Deep link estable documentado (`/ayuda`) y `NEXT_PUBLIC_APP_URL` fijo.
-- [ ] Pollar: origen HTTPS del dominio final en allowlist.
-- [ ] (Opcional) Query `?from=widget` solo para analytics / copy, sin cambiar lógica.
+- [x] Deep link estable (`/ayuda`) y `PULSO_BASE_URL` en el APK.
+- [ ] Pollar: origen HTTPS del dominio final en allowlist (si cambia la URL).
+- [x] Query `?from=widget` en el deep link del widget.
 
 ### Distribución testers
 
 - [ ] Canal de entrega del APK (Drive / Firebase App Distribution).
-- [ ] Guía de 5 pasos con capturas: instalar APK → permitir fuentes → añadir widget → tocar → confirmar alerta.
+- [ ] Guía de 5 pasos con capturas (ver `apps/android/README.md` como base).
 - [ ] Lista de testers y correos familiares de prueba.
 
 ### QA
@@ -141,8 +141,8 @@ No inventar un segundo flujo de alerta en Kotlin; el backend sigue siendo `POST 
 - [ ] Toque con sesión iniciada → llega a confirmación de `/ayuda`.
 - [ ] Toque sin sesión → login → se puede completar ayuda.
 - [ ] Familiar recibe correo y puede ack.
-- [ ] Copy visible: no sustituye al 911.
-- [ ] No envía alerta al solo añadir el widget (solo al confirmar en `/ayuda`).
+- [x] Copy: no sustituye al 911 (descripción del widget + web).
+- [x] No envía alerta al solo añadir el widget (solo al confirmar en `/ayuda`).
 
 ---
 

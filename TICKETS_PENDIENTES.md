@@ -28,7 +28,7 @@
 | **T13** | Contrato Soroban testnet | **Hecho** | Desplegado + Expert; eventos vía app |
 | **T14** | Anclaje no bloqueante + reintentos | **Hecho** | OPENED / FAMILY_ACK / CLOSED / FALSE_ALARM |
 | **T15** | Simulacro E2E (teléfono → aviso → familiar → cadena) | **Pendiente** | Path teléfono listo; falta checklist formal |
-| **T18** | Widget nativo Android (APK) | **Pendiente** | Spec completa: [`docs/T18_ANDROID_WIDGET.md`](./docs/T18_ANDROID_WIDGET.md) |
+| **T18** | Widget nativo Android (APK) | **Hecho (v1)** | Código en `apps/android/`; spec [`docs/T18_ANDROID_WIDGET.md`](./docs/T18_ANDROID_WIDGET.md) |
 | **T16** | Producción piloto + monitoreo | **Pendiente** | Después del simulacro |
 | **T17** | Ubicación opcional | **Después del MVP** | No bloquear |
 

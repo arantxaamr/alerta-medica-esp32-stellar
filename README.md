@@ -10,9 +10,11 @@ Sistema de alerta y seguimiento para emergencias médicas familiares (teléfono 
 
 ```text
 apps/web/          Next.js (API + paneles persona/familiar)
-firmware/          Arduino ESP32-DevKit V1 (pulsador + LED)
+apps/android/      Widget nativo «Necesito ayuda» (APK Kotlin, T18)
+firmware/          Arduino ESP32-DevKit V1 (pausado / opcional)
 contracts/         Contrato Soroban (Stellar testnet)
 PDR_TRD_*.md       Guía de producto y arquitectura
+docs/              Guías testers + tickets (SOS teléfono, widget)
 ```
 
 ## Stack

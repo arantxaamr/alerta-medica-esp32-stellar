@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Pulso" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pulso_primary</item>
+        <item name="colorPrimaryVariant">@color/pulso_primary</item>
+        <item name="colorSecondary">@color/pulso_danger</item>
+        <item name="android:statusBarColor">@color/pulso_primary</item>
+        <item name="android:windowBackground">@color/pulso_background</item>
+    </style>
+
+    <style name="Theme.Pulso.Translucent" parent="Theme.Pulso">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

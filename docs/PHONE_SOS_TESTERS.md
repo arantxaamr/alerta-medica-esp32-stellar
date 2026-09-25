@@ -34,10 +34,10 @@ Sin ese paso, la API de config de Pollar responde **403** y el login OTP no carg
 
 ## Qué queda para después (widget nativo)
 
-Ticket detallado (look & feel, deep link, checklist, criterios):  
-[`docs/T18_ANDROID_WIDGET.md`](./T18_ANDROID_WIDGET.md)
+**v1 en el repo:** [`apps/android/`](../apps/android/) — widget rojo 2×2 que abre `/ayuda`.
 
-Resumen: APK Kotlin con widget 2×2 rojo **Necesito ayuda** → abre `/ayuda` en la URL HTTPS de Pulso.
+Spec y pendientes (TWA, release firmado, QA en dispositivo):  
+[`docs/T18_ANDROID_WIDGET.md`](./T18_ANDROID_WIDGET.md)
 
 ## ESP32
 

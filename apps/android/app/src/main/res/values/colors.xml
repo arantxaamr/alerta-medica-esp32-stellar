@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pulso_primary">#0D5C63</color>
+    <color name="pulso_danger">#B42318</color>
+    <color name="pulso_on_danger">#FFFFFF</color>
+    <color name="pulso_on_danger_muted">#F8D7D4</color>
+    <color name="pulso_background">#F7FAFC</color>
+    <color name="ic_launcher_background">#0D5C63</color>
+</resources>
