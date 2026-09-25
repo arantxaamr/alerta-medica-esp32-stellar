@@ -15,30 +15,32 @@
 |----|--------|--------|-------|
 | **T01** | Protocolo familiar CDMX | **Hecho** | `/protocolo`, principal/suplente, 15 min, mensajes |
 | **T02** | Aviso de privacidad + matriz de acceso | **Hecho** | `/privacidad`, consent `pulso-kyc-v2` |
-| **T03** | Deploy preview en Vercel | **Pendiente** | Monorepo OK; falta URL pública + env en Vercel |
+| **T03** | Deploy preview en Vercel | **Hecho (piloto)** | `https://pulso-web-nu.vercel.app` (proyecto CLI `pulso-web`); falta ligar Git si se quiere CI |
 | **T04** | PostgreSQL / Prisma / seed | **Hecho** | Supabase + schema |
 | **T05** | Pollar OTP + roles | **Hecho** | Usuario/familiar Pollar; admin por clave |
-| **T06** | Perfil, contactos, **vinculación de dispositivo** | **Parcial** | Alta/KYC/contactos OK; falta pairing ESP32 |
-| **T07** | Firmware ESP32 (GPIO, HTTPS, firma, reintento, LED) | **Parcial** | Stub GPIO27+LED; falta Wi‑Fi/HTTPS/HMAC |
-| **T08** | Ingesta API device-events + dedupe + tiempos | **Parcial** | Flujo **web** OK; falta `POST /api/device-events` |
+| **T06** | Perfil, contactos, dispositivo | **Parcial** | Alta/KYC/contactos OK; ESP32 **pausado** (rama `feature/esp32-device-integration`) |
+| **T07** | Firmware ESP32 | **Pausado** | Pivot MVP → SOS teléfono; retomar después |
+| **T08** | Ingesta device-events ESP32 | **Pausado** | Flujo **web/teléfono** es el path del MVP |
 | **T09** | Cola correos + estados | **Hecho (núcleo)** | Resend + notificaciones; mejorar reintentos UI si hace falta |
 | **T10** | Panel familiar + cierre | **Hecho (núcleo)** | Ack, cierre, falsa alarma, protocolo en UI |
-| **T11** | Panel usuario | **Hecho (núcleo)** | `/inicio`, `/ayuda`; falta «Mi dispositivo» |
+| **T11** | Panel usuario + SOS teléfono | **Hecho** | PWA, `/inicio` ayuda, confirmación `/ayuda`, sync Pollar→Pulso |
 | **T12** | Chequeo diario `pulso_daily_v1` | **Hecho** | `/chequeo` + APIs + share |
 | **T13** | Contrato Soroban testnet | **Hecho** | Desplegado + Expert; eventos vía app |
 | **T14** | Anclaje no bloqueante + reintentos | **Hecho** | OPENED / FAMILY_ACK / CLOSED / FALSE_ALARM |
-| **T15** | Simulacro E2E (botón → aviso → familiar → cadena) | **Pendiente** | Web casi; físico cuando T06–T08 |
+| **T15** | Simulacro E2E (teléfono → aviso → familiar → cadena) | **Pendiente** | Path teléfono listo; falta checklist formal |
+| **T18** | Widget nativo Android (APK) | **Pendiente** | Spec completa: [`docs/T18_ANDROID_WIDGET.md`](./docs/T18_ANDROID_WIDGET.md) |
 | **T16** | Producción piloto + monitoreo | **Pendiente** | Después del simulacro |
 | **T17** | Ubicación opcional | **Después del MVP** | No bloquear |
 
 ### Orden recomendado de ataque
 
 ```text
-1. T03  — Vercel (URL HTTPS pública; el ESP32 la necesita)
-2. T06 + T08 + T07 — dispositivo end-to-end (este doc, §3)
-3. T15  — simulacro completo con capturas
+1. T11  — SOS teléfono + PWA (rama feature/phone-sos-pwa → merge a main)
+2. T03  — Vercel (URL HTTPS; necesaria para instalar PWA en Android)
+3. T15  — simulacro E2E teléfono → familiar → Stellar
 4. T16  — endurecer piloto
-5. T17  — solo si sobra tiempo
+5. T18  — widget nativo Android (si hay tiempo)
+6. T06–T08 / T07 — ESP32 solo si se retoma hardware
 ```
 
 ---

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePollar } from "@pollar/react";
 import type { AuthState } from "@pollar/core";
+import { syncPollarToPulso } from "@/lib/pollar-sync";
 
 function PollarEmailLogin() {
   const {
@@ -18,6 +19,8 @@ function PollarEmailLogin() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const client = getClient();
@@ -46,14 +49,47 @@ function PollarEmailLogin() {
     });
   }, [getClient]);
 
+  async function goToPanel() {
+    setSyncing(true);
+    setSyncError(null);
+    const result = await syncPollarToPulso(getClient, { emailHint: email });
+    setSyncing(false);
+    if (!result.ok) {
+      setSyncError(result.error || "No se pudo abrir el panel");
+      return;
+    }
+    window.location.assign(result.redirectTo || "/inicio");
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void goToPanel();
+    // Solo al pasar a autenticado; el botón reintenta manualmente.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
   if (isAuthenticated) {
     return (
       <section className="space-y-3 rounded-xl border border-border bg-surface p-4">
         <p className="text-success">Ya tienes sesión Pollar activa.</p>
         <p className="text-sm text-text-secondary">
-          Te llevamos al panel en un momento. Si quieres usar otro correo, cierra
-          sesión primero.
+          {syncing
+            ? "Abriendo tu panel de Pulso…"
+            : "Si no avanzas solo, entra al panel con el botón."}
         </p>
+        {syncError ? (
+          <p className="text-danger" role="alert">
+            {syncError}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          disabled={syncing}
+          onClick={() => void goToPanel()}
+          className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-4 font-medium text-white disabled:opacity-60"
+        >
+          {syncing ? "Abriendo…" : "Continuar al panel"}
+        </button>
         <button
           type="button"
           onClick={() => {
@@ -62,6 +98,7 @@ function PollarEmailLogin() {
             setCode("");
             setError(null);
             setInfo(null);
+            setSyncError(null);
           }}
           className="flex min-h-[52px] w-full items-center justify-center rounded-xl border border-border px-4 font-medium text-text"
         >
@@ -83,6 +120,25 @@ function PollarEmailLogin() {
     return (
       <section className="space-y-3 rounded-xl border border-border bg-surface p-4">
         <p className="text-danger">No se pudo cargar Pollar.</p>
+        <p className="text-sm text-text-secondary">
+          En producción suele faltar autorizar este dominio en{" "}
+          <a
+            className="text-primary underline"
+            href="https://dashboard.pollar.xyz"
+            target="_blank"
+            rel="noreferrer"
+          >
+            dashboard.pollar.xyz
+          </a>
+          : añade{" "}
+          <code className="text-text">
+            {typeof window !== "undefined"
+              ? window.location.origin
+              : "https://tu-app.vercel.app"}
+          </code>{" "}
+          en orígenes / dominios permitidos (junto a{" "}
+          <code className="text-text">http://localhost:3000</code>).
+        </p>
         <button
           type="button"
           onClick={() => retryConfig()}

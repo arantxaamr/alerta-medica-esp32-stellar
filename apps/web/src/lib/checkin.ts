@@ -98,7 +98,7 @@ export function computePulsoDailyScore(
 ): number | null {
   const vals = [answers.S1, answers.S2, answers.S3, answers.S4, answers.S5];
   if (vals.some((v) => v === null || v === undefined)) return null;
-  const sum = (vals as ScorePoint[]).reduce((a, b) => a + b, 0);
+  const sum = (vals as ScorePoint[]).reduce<number>((a, b) => a + b, 0);
   return 5 * sum;
 }
 

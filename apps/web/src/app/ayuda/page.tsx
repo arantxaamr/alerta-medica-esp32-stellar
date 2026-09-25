@@ -24,7 +24,7 @@ type IncidentView = {
   notifications: { status: string; contactName?: string }[];
 };
 
-type Phase = "idle" | "sending" | "ready" | "error";
+type Phase = "confirm" | "sending" | "ready" | "error";
 
 function Step({
   done,
@@ -46,8 +46,19 @@ function Step({
   );
 }
 
+function notifiedNames(incident: IncidentView | null): string {
+  if (!incident?.notifications?.length) return "";
+  const names = incident.notifications
+    .map((n) => n.contactName)
+    .filter((n): n is string => Boolean(n));
+  if (!names.length) return "";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
+
 export default function AyudaPage() {
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("confirm");
   const [incident, setIncident] = useState<IncidentView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -81,10 +92,6 @@ export default function AyudaPage() {
   }, []);
 
   useEffect(() => {
-    sendAlert();
-  }, [sendAlert]);
-
-  useEffect(() => {
     if (!incident?.id || phase !== "ready") return;
     const t = setInterval(async () => {
       try {
@@ -100,6 +107,43 @@ export default function AyudaPage() {
   }, [incident?.id, phase]);
 
   const busy = phase === "sending" || isPending;
+  const familyLabel = notifiedNames(incident);
+
+  if (phase === "confirm") {
+    return (
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-8">
+        <p className="text-sm font-medium text-primary">Pulso · pedir ayuda</p>
+        <h1 className="text-[28px] font-semibold leading-tight text-text">
+          ¿Avisamos a tus familiares ahora?
+        </h1>
+        <p className="text-text-secondary">
+          Se enviará una alerta por correo a tus contactos verificados. Esto no
+          sustituye al 911.
+        </p>
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={sendAlert}
+            className="flex min-h-[56px] w-full items-center justify-center rounded-xl bg-danger px-4 text-center text-lg font-semibold text-white"
+          >
+            Sí, pedir ayuda ahora
+          </button>
+          <a
+            href="tel:911"
+            className="flex min-h-[52px] items-center justify-center rounded-xl border border-danger px-4 font-semibold text-danger"
+          >
+            Llamar al 911
+          </a>
+          <Link
+            href="/inicio"
+            className="flex min-h-[52px] items-center justify-center rounded-xl border border-border px-4 font-medium text-text"
+          >
+            Cancelar
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto w-full max-w-lg px-4 py-8">
@@ -107,7 +151,9 @@ export default function AyudaPage() {
         {phase === "error"
           ? "No pudimos confirmar el envío"
           : phase === "ready"
-            ? "Alerta enviada"
+            ? familyLabel
+              ? `Ya avisamos a ${familyLabel}`
+              : "Alerta enviada"
             : "Estamos enviando tu alerta…"}
       </h1>
 
@@ -137,7 +183,9 @@ export default function AyudaPage() {
                 ? "Familiares: aviso en cola"
                 : incident?.ui.familyNotify === "sent" ||
                     incident?.ui.familyNotify === "done"
-                  ? "Familiares: correo enviado"
+                  ? familyLabel
+                    ? `Familiares avisados: ${familyLabel}`
+                    : "Familiares: correo enviado"
                   : incident?.ui.familyNotify === "failed"
                     ? "Familiares: no se pudo enviar el correo"
                     : "Familiares: aviso en proceso"
@@ -145,7 +193,11 @@ export default function AyudaPage() {
           />
           <Step
             done={Boolean(incident?.ui.familyAck)}
-            label="Familiar: pendiente de confirmar"
+            label={
+              incident?.ui.familyAck
+                ? "Familiar: confirmó la alerta"
+                : "Familiar: pendiente de confirmar"
+            }
           />
           <Step
             done={Boolean(incident?.ui.chainAnchored)}

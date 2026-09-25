@@ -1,8 +1,10 @@
 # Pulso — monorepo
 
-Sistema de alerta y seguimiento para emergencias médicas familiares (ESP32 + Pollar + Stellar). Demo piloto CDMX.
+Sistema de alerta y seguimiento para emergencias médicas familiares (teléfono + Pollar + Stellar; ESP32 opcional/futuro). Demo piloto CDMX.
 
 > Una alerta en correo o panel **no** equivale a un reporte recibido por el 911. Un familiar designado llama al 911 cuando corresponda.
+
+**MVP actual:** pedir ayuda desde el teléfono (`/inicio` → Necesito ayuda). Guía para testers Android: [`docs/PHONE_SOS_TESTERS.md`](./docs/PHONE_SOS_TESTERS.md).
 
 ## Estructura
 

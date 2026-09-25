@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-/** Fondea la wallet Pollar (deferred) tras KYC de producto aprobado. */
+/** Fondea la wallet Pollar (opcional) tras KYC de producto completado. */
 export async function POST(request: Request) {
   const session = await requireSession(["USER", "ADMIN"]);
   if (!session) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const profile = await prisma.profile.findUnique({
     where: { userId: session.userId },
   });
-  if (!profile || profile.kycStatus !== "approved") {
+  if (!profile || profile.kycStatus !== "completed") {
     return NextResponse.json(
       { error: "Completa el KYC antes de activar la wallet" },
       { status: 400 },
@@ -68,11 +68,6 @@ export async function POST(request: Request) {
       { status: response.status },
     );
   }
-
-  await prisma.profile.update({
-    where: { userId: session.userId },
-    data: { walletFundedAt: new Date() },
-  });
 
   return NextResponse.json({
     activated: true,

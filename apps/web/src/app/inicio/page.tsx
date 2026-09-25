@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { LogoutButton } from "@/components/logout-button";
+import { InstallHint } from "@/components/InstallHint";
 import { localDayCDMX } from "@/lib/checkin";
 
 export const dynamic = "force-dynamic";
@@ -80,25 +81,33 @@ export default async function InicioPage() {
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+      <InstallHint />
+
+      <section className="flex flex-col gap-3">
         <Link
           href="/ayuda"
-          className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-danger px-4 text-center text-lg font-semibold text-white"
+          className="flex min-h-[64px] w-full items-center justify-center rounded-xl bg-danger px-4 text-center text-xl font-semibold text-white shadow-sm"
         >
           Necesito ayuda
         </Link>
-        <Link
-          href="/chequeo"
-          className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-4 text-center font-medium text-white"
-        >
-          Hacer mi chequeo de hoy
-        </Link>
-        <Link
-          href="/contactos"
-          className="flex min-h-[52px] w-full items-center justify-center rounded-xl border border-border bg-surface px-4 text-center font-medium text-text"
-        >
-          Ver mis contactos de ayuda
-        </Link>
+        <p className="text-center text-sm text-text-secondary">
+          Un toque avisa a tus familiares verificados. Confirmarás antes de
+          enviar.
+        </p>
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+          <Link
+            href="/chequeo"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-4 text-center font-medium text-white"
+          >
+            Hacer mi chequeo de hoy
+          </Link>
+          <Link
+            href="/contactos"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-xl border border-border bg-surface px-4 text-center font-medium text-text"
+          >
+            Ver mis contactos de ayuda
+          </Link>
+        </div>
       </section>
     </main>
   );
