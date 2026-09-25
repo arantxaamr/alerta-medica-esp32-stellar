@@ -105,7 +105,7 @@ Ver §3.4 (especificación completa). Criterio: un POST válido = un incidente; 
 
 ### T07 (resto) — Firmware
 
-Ver §3.3. Criterio: pulsación sostenida con Wi‑Fi crea incidente en URL pública; sin Wi‑Fi el LED indica fallo y reintenta.
+Ver §3.3. Criterio: dos pulsaciones físicas, con liberación entre ellas y dentro de la ventana configurada, crean un incidente en la URL pública; un solo toque no genera una alerta. Sin Wi‑Fi, el LED indica fallo y el firmware reintenta.
 
 ---
 
@@ -374,7 +374,7 @@ Documentar cuál variante usaron en el simulacro.
 **Corrida feliz**
 
 1. Alimentar ESP32; Serial muestra Wi‑Fi IP.
-2. Mantener botón ≥ 1.2 s.
+2. Presionar y liberar el botón dos veces dentro de 3 segundos.
 3. Serial: HTTP 200/202 + `incidentId`.
 4. LED patrón de éxito.
 5. `/ayuda` o `/inicio`: alerta activa.

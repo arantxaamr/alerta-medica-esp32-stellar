@@ -1,6 +1,6 @@
 # Firmware Pulso — ESP32 DevKit V1
 
-Rama de trabajo: `feature/esp32-device-integration`  
+Integrado en la rama principal: `main`
 Plan completo: [`TICKETS_PENDIENTES.md`](../TICKETS_PENDIENTES.md) §3.
 
 ## 1. Conexiones (haz esto primero)
@@ -37,9 +37,10 @@ Placa: **ESP32-WROOM-32** en DevKit V1. Pulsador **normalmente abierto**.
 2. Placa: **ESP32 Dev Module**, puerto COM correcto.  
 3. Sube el sketch actual (solo botón + LED).  
 4. Monitor serie **115200**.  
-5. Mantén el botón ~**1.2 s**:
-   - LED integrado se enciende al pulsar  
-   - En Serial: `ALERT_TRIGGER — sustained press detected...`
+5. Presiona y libera el botón **dos veces** dentro de 3 segundos:
+   - El primer toque solo inicia la ventana de confirmación y no crea una alerta.
+   - El segundo toque activa tres destellos del LED.
+   - En Serial: `ALERT_TRIGGER — doble pulsacion detectada (solo evento local)`.
 
 Si no pasa nada: revisa GND/GPIO27, otro pin serigrafiado, o cambia de par de patas del pulsador.
 
@@ -80,6 +81,7 @@ Crear `firmware/pulso_button/secrets.h` (en `.gitignore`, **nunca** en Git):
 
 ## 4. Criterio de “conexiones OK”
 
-- [ ] Pulsación corta (&lt; 1 s) no dispara alerta en Serial  
-- [ ] Pulsación ≥ 1.2 s → `ALERT_TRIGGER` + LED  
+- [ ] Un solo toque no dispara una alerta y expira después de 3 segundos.
+- [ ] Dos toques, con liberación entre ellos, producen `ALERT_TRIGGER` + tres destellos del LED.
+- [ ] Mantener presionado el botón cuenta como un solo toque.
 - [ ] Foto del cableado para el simulacro T15  
