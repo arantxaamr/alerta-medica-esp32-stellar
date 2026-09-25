@@ -65,10 +65,26 @@ En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables d
 
 Roles por correo: `ADMIN_EMAILS`, `FAMILY_EMAILS` (lista separada por comas).
 
+## Stellar testnet (Pulso Anchor)
+
+Contrato Soroban desplegado e inicializado con la cuenta `pulso-admin`.
+
+| Recurso | ID / enlace |
+|--------|-------------|
+| **Contract ID** | `CBOCHL4EFIVNPLVYXP6Y352CXAKDZ5PM53PTHJ2OR57UL7E2ZKGK273X` |
+| **Contrato (Stellar Expert)** | [Ver en testnet](https://stellar.expert/explorer/testnet/contract/CBOCHL4EFIVNPLVYXP6Y352CXAKDZ5PM53PTHJ2OR57UL7E2ZKGK273X) |
+| **Admin (`pulso-admin`)** | `GANLLWK2VI5O7FQXPJMGH55A6SYVUGT66GLSUZICPLGSIN6FHC73I2GE` |
+| **Cuenta admin (Stellar Expert)** | [Ver en testnet](https://stellar.expert/explorer/testnet/account/GANLLWK2VI5O7FQXPJMGH55A6SYVUGT66GLSUZICPLGSIN6FHC73I2GE) |
+
+Detalles de build/deploy: [`contracts/README.md`](./contracts/README.md).
+
 ## Pendiente / aplazado
 
 - **ESP32**: aplazado hasta KYC + cuestionarios reales (persona, familiar, admin).
-- **Stellar**: anclaje de incidentes en testnet (siguiente).
+- **T03**: preview en Vercel.
+- **T15**: simulacro E2E completo (incluye botón físico).
+
+Documentos del piloto: `/protocolo` (T01), `/privacidad` (T02). Chequeo diario: `/chequeo` (T12, `pulso_daily_v1`).
 
 ## Documentación
 

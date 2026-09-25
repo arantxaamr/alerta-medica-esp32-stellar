@@ -123,8 +123,17 @@ export default function FamiliarUnirPage() {
           />
         </label>
 
-        <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary whitespace-pre-line">
-          {PRIVACY_SUMMARY}
+        <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary">
+          <p className="whitespace-pre-line">{PRIVACY_SUMMARY}</p>
+          <p className="mt-3">
+            <a href="/privacidad" className="text-primary underline">
+              Leer aviso completo
+            </a>
+            {" · "}
+            <a href="/protocolo" className="text-primary underline">
+              Protocolo familiar (15 min / 911)
+            </a>
+          </p>
         </div>
 
         <label className="flex gap-3">
@@ -143,7 +152,11 @@ export default function FamiliarUnirPage() {
             checked={form.acceptsCall911}
             onChange={(e) => setForm({ ...form, acceptsCall911: e.target.checked })}
           />
-          <span>Me comprometo a llamar al 911 cuando corresponda; Pulso no avisa solo a autoridades.</span>
+          <span>
+            Me comprometo a seguir el protocolo: confirmar recepción, contactar a
+            la persona y llamar al 911 cuando corresponda. Pulso no avisa solo a
+            autoridades.
+          </span>
         </label>
         <label className="flex gap-3">
           <input

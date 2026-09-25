@@ -8,10 +8,18 @@ type IncidentView = {
   status: string;
   isSimulation: boolean;
   openedAtUtc: string;
+  anchors?: {
+    status: string;
+    eventCode: string | null;
+    explorerUrl: string | null;
+    txHash: string | null;
+  }[];
   ui: {
     systemReceived: boolean;
     familyNotify: "queued" | "sent" | "failed" | "done";
     familyAck: boolean;
+    chainAnchored?: boolean;
+    chainPending?: boolean;
   };
   notifications: { status: string; contactName?: string }[];
 };
@@ -139,8 +147,38 @@ export default function AyudaPage() {
             done={Boolean(incident?.ui.familyAck)}
             label="Familiar: pendiente de confirmar"
           />
+          <Step
+            done={Boolean(incident?.ui.chainAnchored)}
+            pending={Boolean(incident?.ui.chainPending)}
+            label={
+              incident?.ui.chainAnchored
+                ? "Registro en Stellar confirmado"
+                : incident?.ui.chainPending
+                  ? "Registro en Stellar en proceso…"
+                  : "Registro en Stellar"
+            }
+          />
         </ul>
       )}
+
+      {incident?.anchors?.some((a) => a.explorerUrl) ? (
+        <ul className="mt-4 space-y-1 text-sm text-text-secondary">
+          {incident.anchors
+            .filter((a) => a.explorerUrl)
+            .map((a) => (
+              <li key={a.txHash || a.explorerUrl}>
+                <a
+                  href={a.explorerUrl!}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline"
+                >
+                  Ver {a.eventCode || "evento"} en Stellar Expert
+                </a>
+              </li>
+            ))}
+        </ul>
+      ) : null}
 
       <div className="mt-8 flex flex-col gap-3">
         <a

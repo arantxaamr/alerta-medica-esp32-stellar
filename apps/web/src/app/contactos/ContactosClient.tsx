@@ -55,7 +55,8 @@ export function ContactosClient({ showAltaHint }: { showAltaHint?: boolean }) {
           contacts.map((c) => (
             <li key={c.id} className="rounded-xl border border-border bg-surface p-4">
               <p className="font-medium text-text">
-                {c.name} {c.isPrimary ? "(principal)" : ""}
+                {c.name}{" "}
+                {c.isPrimary ? "(principal)" : "(suplente)"}
               </p>
               <p className="text-sm text-text-secondary">
                 {c.email} · {c.relationship}
@@ -106,8 +107,13 @@ export function ContactosClient({ showAltaHint }: { showAltaHint?: boolean }) {
       >
         <h2 className="text-lg font-semibold text-text">Invitar familiar</h2>
         <p className="text-sm text-text-secondary">
-          Le enviaremos al correo un enlace para completar su alta y unirse a tu
-          red de apoyo.
+          Le enviaremos al correo un enlace para completar su alta. Marca un
+          contacto como <strong className="text-text">principal</strong>; los
+          demás serán suplentes (deben confirmar en ≤ 15 min según el{" "}
+          <Link href="/protocolo" className="text-primary underline">
+            protocolo
+          </Link>
+          ).
         </p>
         <input
           className="min-h-[52px] w-full rounded-xl border border-border px-3"
@@ -143,7 +149,7 @@ export function ContactosClient({ showAltaHint }: { showAltaHint?: boolean }) {
             checked={form.isPrimary}
             onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })}
           />
-          Contacto principal
+          Contacto principal (el resto serán suplentes)
         </label>
         <button
           type="submit"

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { LogoutButton } from "@/components/logout-button";
+import { localDayCDMX } from "@/lib/checkin";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,15 @@ export default async function InicioPage() {
     orderBy: { openedAtUtc: "desc" },
   });
 
+  const todayCheckin = await prisma.dailyCheckin.findUnique({
+    where: {
+      userId_localDay: {
+        userId: session.userId,
+        localDay: localDayCDMX(),
+      },
+    },
+  });
+
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-8">
       <header className="space-y-2">
@@ -50,6 +60,15 @@ export default async function InicioPage() {
               ? "Tu red de apoyo está lista."
               : "Alta lista. Invita a un familiar para recibir alertas."}
         </p>
+        {todayCheckin ? (
+          <p className="text-sm text-text-secondary">
+            Chequeo de hoy:{" "}
+            {todayCheckin.score0100 === null
+              ? "guardado sin puntaje completo"
+              : `bienestar reportado ${todayCheckin.score0100}/100`}
+            .
+          </p>
+        ) : null}
       </header>
 
       {verifiedFamily === 0 ? (

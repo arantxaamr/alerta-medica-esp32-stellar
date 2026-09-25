@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { LogoutButton } from "@/components/logout-button";
+import { FamiliarCheckins } from "./FamiliarCheckins";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,13 @@ export default async function FamiliarHomePage() {
         </div>
         <LogoutButton />
       </div>
+      <p className="mt-2 text-text-secondary">
+        Alertas de tu red. Sigue el{" "}
+        <Link href="/protocolo" className="text-primary underline">
+          protocolo familiar
+        </Link>{" "}
+        (confirmación ≤ 15 min, 911 humano).
+      </p>
       <ul className="mt-6 space-y-3">
         {incidents.length === 0 ? (
           <li className="text-text-secondary">No hay alertas todavía.</li>
@@ -60,6 +68,7 @@ export default async function FamiliarHomePage() {
           ))
         )}
       </ul>
+      <FamiliarCheckins />
     </main>
   );
 }

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { dispatchQueuedNotifications } from "@/lib/email";
 import { requireSession } from "@/lib/session";
-import { queueAndTryAnchor } from "@/lib/stellar";
+import { queueAndTryAnchor, serializeAnchors } from "@/lib/stellar";
 import type { IncidentStatus } from "@prisma/client";
 
 const DEMO_USER_EMAIL = process.env.DEMO_USER_EMAIL ?? "ana.demo@pulso.local";
@@ -16,6 +16,15 @@ const OPEN_STATUSES: IncidentStatus[] = [
 function obfuscateIp(ip: string | null): string | null {
   if (!ip) return null;
   return createHash("sha256").update(`pulso-ip:${ip}`).digest("hex");
+}
+
+function fireAnchor(
+  promise: ReturnType<typeof queueAndTryAnchor>,
+  label: string,
+) {
+  void promise.catch((error) => {
+    console.error(`stellar anchor ${label} failed (non-blocking)`, error);
+  });
 }
 
 export async function resolveClientIp(): Promise<string | null> {
@@ -68,6 +77,12 @@ export async function getDemoUser() {
   return getActingUser();
 }
 
+const incidentInclude = {
+  events: { orderBy: { seq: "asc" as const } },
+  notifications: { include: { contact: true } },
+  chainAnchors: { orderBy: { createdAt: "asc" as const } },
+};
+
 export async function createWebHelpIncident(opts?: {
   forceNew?: boolean;
 }) {
@@ -75,7 +90,6 @@ export async function createWebHelpIncident(opts?: {
   const ip = await resolveClientIp();
   const serverReceivedAtUtc = new Date();
 
-  // Only verified contacts with completed family KYC get alert emails
   const alertContacts = user.contacts.filter(
     (c) => c.verifiedAt && c.kycStatus === "completed",
   );
@@ -87,10 +101,7 @@ export async function createWebHelpIncident(opts?: {
         status: { in: OPEN_STATUSES },
       },
       orderBy: { openedAtUtc: "desc" },
-      include: {
-        events: { orderBy: { seq: "asc" } },
-        notifications: { include: { contact: true } },
-      },
+      include: incidentInclude,
     });
     if (existing) {
       if (existing.notifications.length === 0 && alertContacts.length > 0) {
@@ -105,20 +116,10 @@ export async function createWebHelpIncident(opts?: {
             updatedAt: now,
           })),
         });
-        const refreshed = await prisma.incident.findUniqueOrThrow({
-          where: { id: existing.id },
-          include: {
-            events: { orderBy: { seq: "asc" } },
-            notifications: { include: { contact: true } },
-          },
-        });
-        await dispatchQueuedNotifications(refreshed.id);
+        await dispatchQueuedNotifications(existing.id);
         const afterMail = await prisma.incident.findUniqueOrThrow({
-          where: { id: refreshed.id },
-          include: {
-            events: { orderBy: { seq: "asc" } },
-            notifications: { include: { contact: true } },
-          },
+          where: { id: existing.id },
+          include: incidentInclude,
         });
         return { incident: afterMail, reused: true as const };
       }
@@ -128,10 +129,7 @@ export async function createWebHelpIncident(opts?: {
         await dispatchQueuedNotifications(existing.id);
         const afterMail = await prisma.incident.findUniqueOrThrow({
           where: { id: existing.id },
-          include: {
-            events: { orderBy: { seq: "asc" } },
-            notifications: { include: { contact: true } },
-          },
+          include: incidentInclude,
         });
         return { incident: afterMail, reused: true as const };
       }
@@ -213,19 +211,17 @@ export async function createWebHelpIncident(opts?: {
 
     return tx.incident.findUniqueOrThrow({
       where: { id: created.id },
-      include: {
-        events: { orderBy: { seq: "asc" } },
-        notifications: { include: { contact: true } },
-      },
+      include: incidentInclude,
     });
   });
 
+  // Correo primero; anclaje Stellar en segundo plano (T14: no bloquea alerta)
   await dispatchQueuedNotifications(incident.id);
 
   const opened = incident.events.find((e) => e.seq === 1);
   if (opened) {
-    try {
-      await queueAndTryAnchor({
+    fireAnchor(
+      queueAndTryAnchor({
         incidentId: incident.id,
         incidentEventId: opened.id,
         caseKey: incident.caseKey,
@@ -237,25 +233,31 @@ export async function createWebHelpIncident(opts?: {
           source: "web",
           userId: incident.userId,
         }),
-      });
-    } catch (error) {
-      console.error("stellar anchor failed (non-blocking)", error);
-    }
+      }),
+      "OPENED",
+    );
   }
 
   const withMail = await prisma.incident.findUniqueOrThrow({
     where: { id: incident.id },
-    include: {
-      events: { orderBy: { seq: "asc" } },
-      notifications: { include: { contact: true } },
-    },
+    include: incidentInclude,
   });
 
   return { incident: withMail, reused: false as const };
 }
 
 export function serializeIncident(
-  incident: Awaited<ReturnType<typeof createWebHelpIncident>>["incident"],
+  incident: Awaited<ReturnType<typeof createWebHelpIncident>>["incident"] & {
+    chainAnchors?: {
+      id: string;
+      status: string;
+      txHash: string | null;
+      network: string;
+      retries: number;
+      commitment: string | null;
+      createdAt: Date;
+    }[];
+  },
 ) {
   const notifications = incident.notifications ?? [];
   const anySent = notifications.some((n) => n.status === "sent");
@@ -272,6 +274,12 @@ export function serializeIncident(
         : anyFailed && notifications.every((n) => n.status === "failed")
           ? "failed"
           : "queued";
+
+  const anchors = serializeAnchors(incident.chainAnchors ?? []);
+  const confirmed = anchors.filter((a) => a.status === "confirmed");
+  const pending = anchors.some(
+    (a) => a.status === "pending" || a.status === "failed",
+  );
 
   return {
     id: incident.id,
@@ -291,6 +299,7 @@ export function serializeIncident(
       channel: n.channel,
       contactName: "contact" in n && n.contact ? n.contact.name : undefined,
     })),
+    anchors,
     ui: {
       systemReceived: true,
       familyNotify: familyStep,
@@ -299,6 +308,8 @@ export function serializeIncident(
         incident.status === "contacting" ||
         incident.status === "resolved" ||
         anyAck,
+      chainAnchored: confirmed.length > 0,
+      chainPending: pending && confirmed.length === 0,
     },
   };
 }

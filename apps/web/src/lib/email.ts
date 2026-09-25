@@ -171,6 +171,59 @@ export async function sendFamilyAlertEmail(input: {
   return { ok: true as const, providerId: data?.id ?? null, to };
 }
 
+export async function sendContactRequestEmail(input: {
+  to: string;
+  contactName: string;
+  personName: string;
+}) {
+  const resend = getResend();
+  if (!resend) {
+    return { ok: false as const, error: "RESEND_API_KEY no configurada" };
+  }
+
+  const from =
+    process.env.RESEND_FROM_EMAIL || "Pulso <onboarding@resend.dev>";
+  const { to, redirected } = resolveRecipient(input.to);
+  const link = `${appBaseUrl()}/familiar`;
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to: [to],
+    subject: `[Pulso] ${input.personName} pide que le llamen hoy`,
+    text: [
+      `Hola ${input.contactName},`,
+      "",
+      `${input.personName} completó su chequeo diario y pidió que un contacto le llame hoy.`,
+      "Esto no es una alerta de emergencia. Abre el panel familiar para ver el estado:",
+      link,
+      "",
+      redirected
+        ? `(Demo: destino original ${input.to}; enviado a ${to}.)`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    html: `
+      <div style="font-family:system-ui,sans-serif;font-size:18px;line-height:1.5;color:#172B4D">
+        <p>Hola ${escapeHtml(input.contactName)},</p>
+        <p>
+          <strong>${escapeHtml(input.personName)}</strong> pidió que un contacto
+          le llame hoy (chequeo diario de Pulso).
+        </p>
+        <p style="color:#4B5563">No es una alerta de emergencia.</p>
+        <p>
+          <a href="${link}" style="display:inline-block;background:#0D5C63;color:#fff;padding:14px 20px;border-radius:12px;text-decoration:none;font-weight:600">
+            Abrir panel familiar
+          </a>
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, providerId: data?.id ?? null, to };
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")

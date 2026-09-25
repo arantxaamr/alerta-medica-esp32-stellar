@@ -67,6 +67,15 @@ export default async function LandingPage() {
             la web (alta → invitar familiar → alerta).
           </li>
         </ul>
+        <p className="mt-6 text-sm text-text-secondary">
+          <Link href="/protocolo" className="text-primary underline">
+            Protocolo familiar
+          </Link>
+          {" · "}
+          <Link href="/privacidad" className="text-primary underline">
+            Aviso de privacidad
+          </Link>
+        </p>
       </section>
 
       <footer className="mt-auto border-t border-border bg-surface">

@@ -37,11 +37,11 @@ export async function submitRecordEvent(input: {
     .addOperation(
       contract.call(
         "record_event",
-        nativeToScVal(caseKey, { type: "bytesN", n: 32 }),
+        nativeToScVal(caseKey),
         nativeToScVal(input.seq, { type: "u32" }),
         nativeToScVal(input.eventCode, { type: "u32" }),
-        nativeToScVal(input.serverReceivedAtUnix, { type: "u64" }),
-        nativeToScVal(commitment, { type: "bytesN", n: 32 }),
+        nativeToScVal(BigInt(input.serverReceivedAtUnix), { type: "u64" }),
+        nativeToScVal(commitment),
       ),
     )
     .setTimeout(60)
@@ -59,9 +59,13 @@ export async function submitRecordEvent(input: {
     await new Promise((r) => setTimeout(r, 1500));
     const res = await server.getTransaction(hash);
     if (res.status === "SUCCESS") {
+      const closeTime =
+        "createdAt" in res && typeof res.createdAt === "number"
+          ? res.createdAt
+          : undefined;
       return {
         txHash: hash,
-        ledgerClosedAt: (res as { ledgerCloseTime?: string }).ledgerCloseTime,
+        ledgerClosedAt: closeTime,
       };
     }
     if (res.status === "FAILED") {

@@ -61,8 +61,17 @@ export function AltaUserForm() {
         type="number"
       />
 
-      <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary whitespace-pre-line">
-        {PRIVACY_SUMMARY}
+      <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary">
+        <p className="whitespace-pre-line">{PRIVACY_SUMMARY}</p>
+        <p className="mt-3">
+          <a href="/privacidad" className="text-primary underline">
+            Leer aviso completo y matriz de acceso
+          </a>
+          {" · "}
+          <a href="/protocolo" className="text-primary underline">
+            Protocolo familiar
+          </a>
+        </p>
       </div>
 
       <Check
@@ -73,7 +82,7 @@ export function AltaUserForm() {
       <Check
         checked={form.acceptsPrivacy}
         onChange={(v) => update("acceptsPrivacy", v)}
-        label="Acepto el aviso de privacidad de Pulso (KYC propio del proyecto)."
+        label="Acepto el aviso de privacidad de Pulso (versión del piloto)."
       />
       <Check
         checked={form.acceptsHealthData}
