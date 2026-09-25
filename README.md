@@ -80,12 +80,12 @@ Detalles de build/deploy: [`contracts/README.md`](./contracts/README.md).
 
 ## Pendiente / aplazado
 
-- **ESP32**: aplazado hasta KYC + cuestionarios reales (persona, familiar, admin).
-- **T03**: preview en Vercel.
-- **T15**: simulacro E2E completo (incluye botón físico).
+- **ESP32 + Vercel + simulacro:** ver guía detallada [`TICKETS_PENDIENTES.md`](./TICKETS_PENDIENTES.md) (T03, T06–T08 E2E, T15–T17).
 
-Documentos del piloto: `/protocolo` (T01), `/privacidad` (T02). Chequeo diario: `/chequeo` (T12, `pulso_daily_v1`).
+Documentos del piloto en la app: `/protocolo` (T01), `/privacidad` (T02). Chequeo: `/chequeo` (T12).
 
 ## Documentación
 
-Ver [`PDR_TRD_emergencias_MX.md`](./PDR_TRD_emergencias_MX.md).
+- [`PDR_TRD_emergencias_MX.md`](./PDR_TRD_emergencias_MX.md) — producto y arquitectura  
+- [`TICKETS_PENDIENTES.md`](./TICKETS_PENDIENTES.md) — tickets abiertos y plan ESP32 end-to-end  
+- [`contracts/README.md`](./contracts/README.md) — Soroban testnet  
