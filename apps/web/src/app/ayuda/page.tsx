@@ -1,29 +1,4 @@
-export default function AyudaPage() {
-  return (
-    <main className="mx-auto w-full max-w-lg px-4 py-8">
-      <h1 className="text-[28px] font-semibold text-text">Estamos enviando tu alerta…</h1>
-      <ul className="mt-6 space-y-3 text-lg text-text">
-        <li>✓ Recibida por el sistema (stub — T08)</li>
-        <li>○ Familiares: envío en proceso</li>
-        <li>○ Familiar: pendiente de confirmar</li>
-      </ul>
-      <div className="mt-8 flex flex-col gap-3">
-        <a
-          href="tel:911"
-          className="flex min-h-[52px] items-center justify-center rounded-xl bg-danger px-4 font-semibold text-white"
-        >
-          Llamar al 911
-        </a>
-        <a
-          href="/"
-          className="flex min-h-[52px] items-center justify-center rounded-xl border border-border px-4 font-medium text-text"
-        >
-          Volver al inicio
-        </a>
-      </div>
-      <p className="mt-6 text-sm text-text-secondary">
-        Simulacro: esta pantalla aún no crea un incidente real.
-      </p>
-    </main>
-  );
-}
+import Link from "next/link";
+import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
+
+export default function AyudaPage() { return <><SiteHeader /><main className="inner-page"><div className="shell inner-shell"><Link className="back-link" href="/">← Volver a Pulso</Link><p className="eyebrow">AYUDA</p><h1>Si necesitas ayuda <em>ahora.</em></h1><p className="inner-lead">Esta web es un prototipo y todavía no crea ni envía alertas reales.</p><div className="info-panel"><h2>Ante una emergencia en México</h2><p>Llama al 911 o pide a alguien cercano que lo haga. Explica qué sucede y dónde estás.</p><div className="page-actions"><a className="button button-danger" href="tel:911">Llamar al 911</a><Link className="button button-outline" href="/demo">Ver simulación de Pulso</Link></div></div></div></main><SiteFooter /></>; }

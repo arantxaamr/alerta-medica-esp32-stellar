@@ -61,6 +61,10 @@ En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables d
 
 Por defecto el producto corre en **modo prueba** (identidad y domicilio de demo). El paso a datos reales queda para cuando el producto madure (consentimiento, aviso de privacidad y tickets T01–T02).
 
-## Documentación
+## Documentación y demostración
 
-Ver [`PDR_TRD_emergencias_MX.md`](./PDR_TRD_emergencias_MX.md).
+- [PDR y TRD del piloto](./PDR_TRD_emergencias_MX.md)
+- [Especificación de landing e identidad](./LANDING_PULSO.md)
+- [White paper y canvas de negocio](./WHITEPAPER_PULSO.md)
+
+La ruta `/` presenta Pulso a familias y personas cuidadoras; `/demo` simula la pulsación y la confirmación familiar. La demo no crea incidentes, envía correos ni contacta al 911.

@@ -1,16 +1,4 @@
-export default function ChequeoPage() {
-  return (
-    <main className="mx-auto w-full max-w-lg px-4 py-8">
-      <h1 className="text-[28px] font-semibold text-text">Chequeo de hoy</h1>
-      <p className="mt-2 text-text-secondary">
-        Puedes omitir este chequeo. Flujo completo en T12.
-      </p>
-      <a
-        href="/"
-        className="mt-8 flex min-h-[52px] items-center justify-center rounded-xl border border-border px-4 font-medium text-text"
-      >
-        Volver al inicio
-      </a>
-    </main>
-  );
-}
+import Link from "next/link";
+import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
+
+export default function ChequeoPage() { return <><SiteHeader /><main className="inner-page"><div className="shell inner-shell"><Link className="back-link" href="/">← Volver a Pulso</Link><p className="eyebrow">SEGUIMIENTO COTIDIANO</p><h1>Un momento para saber <em>cómo estás.</em></h1><p className="inner-lead">El futuro chequeo diario será voluntario y breve. Ayudará a conversar con tu familia sobre cambios en tu bienestar.</p><div className="notice"><strong>Función en diseño.</strong> Esta pantalla no guarda respuestas ni calcula un puntaje de salud.</div><div className="info-panel"><h2>Preguntas previstas</h2><ul className="info-list"><li><strong>¿Cómo dormiste?</strong><span>Una respuesta sencilla sobre tu descanso.</span></li><li><strong>¿Cómo te sientes hoy?</strong><span>Tu bienestar general, en tus propias palabras.</span></li><li><strong>¿Tienes dolor o molestias?</strong><span>Para detectar cambios que quieras comentar.</span></li><li><strong>¿Pudiste comer y tomar agua?</strong><span>Un recordatorio de autocuidado.</span></li><li><strong>¿Te gustaría que alguien te llame?</strong><span>Una invitación directa a conectar.</span></li></ul><p>El indicador futuro será de bienestar autodeclarado. No será diagnóstico ni sustituirá atención médica.</p></div><div className="page-actions"><Link href="/demo" className="button button-primary">Ver demostración ↗</Link></div></div></main><SiteFooter /></>; }
