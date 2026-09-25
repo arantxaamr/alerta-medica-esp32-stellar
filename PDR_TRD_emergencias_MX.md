@@ -72,7 +72,7 @@ Una persona puede necesitar ayuda y no tener el teléfono al alcance. El botón 
 
 ### 1.6 Nombre e identidad verbal
 
-**Nombre elegido por el equipo: Pulso.** Mensaje breve propuesto: **«Tu red de apoyo en un toque»**. En la interfaz usar siempre verbos directos: «Pedir ayuda», «Avisar a mi familia», «Confirmar que recibí la alerta». El MVP no mide la frecuencia cardiaca: «Pulso» es el nombre del proyecto, no una promesa de sensor biométrico. Antes de hacer una marca pública permanente, comprobar registro, dominio y cuentas sociales. Evitar mensajes que sugieran afiliación oficial con 911 o servicios médicos.
+**Nombre elegido por el equipo: Pulso.** Mensaje elegido: **«Tu red de apoyo en dos toques»**. Los dos toques son **dos pulsaciones físicas separadas del botón ESP32**: la primera no crea alerta y la segunda, dentro de una ventana inicial de 3 segundos, inicia la solicitud. La confirmación familiar ocurre después y no cuenta como uno de los dos toques. En la interfaz usar verbos directos: «Presiona dos veces para pedir ayuda», «Avisar a mi familia», «Confirmar que recibí la alerta». El MVP no mide la frecuencia cardiaca: «Pulso» es el nombre del proyecto, no una promesa de sensor biométrico. Antes de hacer una marca pública permanente, comprobar registro, dominio y cuentas sociales. Evitar mensajes que sugieran afiliación oficial con 911 o servicios médicos.
 
 ## 2. Flujos de extremo a extremo
 
@@ -82,7 +82,7 @@ Invitación → login con OTP de Pollar → consentimiento y aviso de privacidad
 
 ### 2.2 Emergencia
 
-Pulsación del botón físico → ESP32 envía evento firmado con identificador de dispositivo, contador y hora del dispositivo si está sincronizado → API registra fecha y hora de recepción e IP pública de origen observada, valida, deduplica y responde → LED indica «recibido por servidor», si está conectado → backend guarda incidente y tareas de aviso → familiares reciben correo con enlace seguro → familiar principal acusa recibo, contacta a la persona y, si corresponde, llama al 911 → registra número de folio **solo si fue proporcionado** → actualización de estado visible para autorizados → cierre con motivo y seguimiento. Si el principal no confirma en el plazo acordado, se avisa al suplente.
+Primera pulsación física y liberación → ESP32 espera una segunda pulsación sin enviar nada → segunda pulsación dentro de 3 segundos → ESP32 envía evento firmado con identificador de dispositivo, contador y hora del dispositivo si está sincronizado → API registra fecha y hora de recepción e IP pública de origen observada, valida, deduplica y responde → LED indica «recibido por servidor», si está conectado → backend guarda incidente y tareas de aviso → familiares reciben correo con enlace seguro → familiar principal acusa recibo, contacta a la persona y, si corresponde, llama al 911 → registra número de folio **solo si fue proporcionado** → actualización de estado visible para autorizados → cierre con motivo y seguimiento. Si no ocurre el segundo toque dentro de la ventana, el ESP32 vuelve a reposo sin crear alerta. Si el principal no confirma en el plazo acordado, se avisa al suplente.
 
 Si falla Wi-Fi, el ESP32 señala que no pudo enviar (con LED o buzzer, si están instalados) y reintenta mientras tenga energía. Se debe instruir a la persona a llamar al 911 o pedir a alguien que llame si puede hacerlo; la señal local no debe simular un acuse inexistente. Si el backend recibe la alerta pero falla Stellar, los avisos continúan y el anclaje se reintenta por separado. Batería y conectividad alternativa se diseñarán después del hackathon.
 
@@ -172,7 +172,7 @@ Al pulsar «Necesito ayuda»:
 
 | Pantalla | Acción | Respuesta visible | Estado de error |
 |---|---|---|---|
-| Inicio | «Necesito ayuda» | Deshabilitar doble toque, mostrar «Enviando…» y luego `incidentId` | «No pudimos confirmar el envío» y enlace `tel:911` |
+| Inicio web | «Necesito ayuda» | Deshabilitar clics repetidos en la interfaz web, mostrar «Enviando…» y luego `incidentId`; esta protección web no sustituye el doble toque físico | «No pudimos confirmar el envío» y enlace `tel:911` |
 | Incidente | «Confirmo que recibí la alerta» (familiar) | Nombre y hora en cronología, visible para otros familiares | Permitir reintento sin crear acuses duplicados |
 | Incidente | «Ver detalles» | Mostrar fecha y hora local de recepción; separar «Pulsación estimada» si el reloj del dispositivo estaba sincronizado y «Registro en Stellar» si existe | Si falta hora del dispositivo o anclaje, indicar «No disponible»; nunca inventar una hora |
 | Incidente | «Llamé al 911» (familiar) | Pedir hora, resultado y folio opcional; mostrar «Llamada registrada» | Nunca marcar autoridad avisada solo por abrir `tel:911` |
@@ -337,9 +337,9 @@ GPIO27 del ESP32 ─── terminal 1 del botón
 GND del ESP32    ─── terminal 2 del botón
 ```
 
-Configurar `GPIO27` como entrada con `INPUT_PULLUP`: reposo = HIGH, pulsado = LOW. En firmware, esperar 30–50 ms de estabilidad para filtrar rebote y exigir una activación deliberada (por ejemplo, mantener 1–2 s, pendiente de prueba con usuarios). **Verificar que la placa portadora expone `GPIO27` y GND antes de cablear.** El módulo WROOM-32 puede venir montado en distintas placas. Si el pulsador tiene cuatro patas, identificar con multímetro los dos pares internamente unidos y conectar una pata de cada lado del interruptor. No conectar 5 V ni 3.3 V al botón en este esquema. El ESP32 nunca envía correos ni firma transacciones Stellar: solo comunica el evento a la API por HTTPS. Espressif documenta `GPIO27` en la placa DevKitC y la resistencia pull-up interna. [Pinout](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html), [GPIO Arduino](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/gpio.html).
+Configurar `GPIO27` como entrada con `INPUT_PULLUP`: reposo = HIGH, pulsado = LOW. En firmware, esperar 40 ms de estabilidad para filtrar rebote y reconocer **dos transiciones de reposo a pulsado, con liberación entre ambas**, dentro de una ventana inicial de 3 segundos. Una sola pulsación o mantener el botón apretado no genera alerta. Tras un evento, aplicar 5 segundos de enfriamiento local, además de deduplicación en servidor. Validar la ventana con personas mayores: si dificulta pedir ayuda, ajustarla antes del piloto sin perder la doble pulsación. **Verificar que la placa portadora expone `GPIO27` y GND antes de cablear.** El módulo WROOM-32 puede venir montado en distintas placas. Si el pulsador tiene cuatro patas, identificar con multímetro los dos pares internamente unidos y conectar una pata de cada lado del interruptor. No conectar 5 V ni 3.3 V al botón en este esquema. El ESP32 nunca envía correos ni firma transacciones Stellar: solo comunica el evento a la API por HTTPS. Espressif documenta `GPIO27` en la placa DevKitC y la resistencia pull-up interna. [Pinout](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html), [GPIO Arduino](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/gpio.html).
 
-**Ruta de validación para mañana:** (1) probar que el monitor serie registra una sola activación por pulsación; (2) configurar SSID/contraseña del Wi-Fi de prueba; (3) enviar `POST /api/device-events` por HTTPS con verificación de certificado; (4) confirmar `incidentId` en la respuesta; (5) verificar que aparece en web y llega correo familiar; (6) desconectar Wi-Fi y comprobar que no aparece un falso acuse; (7) reconectar y verificar reintento sin duplicado. Espressif documenta provisión Wi-Fi y cliente HTTPS con verificación de certificado. [Provisión](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/provisioning/index.html), [cliente HTTP](https://docs.espressif.com/projects/esp-idf/en/v6.0/esp32/api-reference/protocols/esp_http_client.html).
+**Ruta de validación del dispositivo:** (1) probar que una sola pulsación no registra `ALERT_TRIGGER`; (2) comprobar que dos pulsaciones separadas dentro de 3 segundos registran exactamente un evento y que mantener el botón apretado no cuenta como dos; (3) comprobar que una segunda pulsación tardía no completa el par anterior; (4) configurar SSID/contraseña del Wi-Fi de prueba; (5) enviar `POST /api/device-events` por HTTPS con verificación de certificado; (6) confirmar `incidentId` en la respuesta; (7) verificar que aparece en web y llega correo familiar; (8) desconectar Wi-Fi y comprobar que no aparece un falso acuse; (9) reconectar y verificar reintento sin duplicado. Los pasos de red y correo siguen pendientes de implementación. Espressif documenta provisión Wi-Fi y cliente HTTPS con verificación de certificado. [Provisión](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/provisioning/index.html), [cliente HTTP](https://docs.espressif.com/projects/esp-idf/en/v6.0/esp32/api-reference/protocols/esp_http_client.html).
 
 **Fase futura:** batería/UPS para el ESP32 y router, o conectividad celular de respaldo. Un ESP32 con Wi-Fi no puede transmitir una alerta a internet si se cae la red doméstica.
 
@@ -359,7 +359,7 @@ Configurar `GPIO27` como entrada con `INPUT_PULLUP`: reposo = HIGH, pulsado = LO
 | Correo | Decidir si se necesita **enviar desde una cuenta Gmail** o solo **entregar a familiares con Gmail**. Si se elige Gmail API, crear proyecto Google Cloud, habilitar Gmail API, configurar OAuth y solicitar `gmail.send` para la cuenta emisora | Enviar un correo de prueba desde el backend a un familiar y confirmar recepción. [Inicio Gmail API](https://developers.google.com/workspace/gmail/api/quickstart/nodejs), [permiso `gmail.send`](https://developers.google.com/workspace/gmail/api/auth/scopes?hl=es-419) |
 | Base de datos | Crear PostgreSQL administrado y guardar URL de conexión en Vercel; ejecutar migraciones | Incidente persiste al recargar la web |
 | Stellar | Crear cuenta de despliegue en testnet, fondearla con el mecanismo de testnet y desplegar contrato Soroban | Guardar `contractId`, `tx_hash` y enlace al explorador; verificar evento. [CLI Stellar](https://developers.stellar.org/docs/tools/cli/stellar-cli) |
-| Dispositivo | Configurar Wi-Fi de la casa y credencial **propia del dispositivo** | Pulsación física desde el ESP32 crea incidente en URL pública |
+| Dispositivo | Configurar Wi-Fi de la casa y credencial **propia del dispositivo** | Dos pulsaciones físicas válidas desde el ESP32 crean incidente en URL pública; una sola no crea nada |
 
 **Variables de entorno previstas:** `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`, `POLLAR_SECRET_KEY`, `DATABASE_URL`, credenciales del proveedor de correo, `STELLAR_NETWORK=testnet`, `STELLAR_CONTRACT_ID`, secreto de firma del dispositivo. Los nombres exactos de correo y firma se fijan al elegir la implementación. Nunca enviar secretos por chat, publicarlos en Git ni usar el prefijo `NEXT_PUBLIC_` para claves privadas.
 
@@ -398,7 +398,7 @@ El alcance demostrable debe ser **un ESP32 y un botón físico, 2–5 personas u
 | 1 | App Next.js desplegada en Vercel y base de datos conectada | T03–T04 | Endpoint de salud responde desde URL pública |
 | 2 | Incidente creado desde un botón **web** de prueba y visible en pantalla familiar | núcleo de T08 y T11 | Mismo `incidentId` en API y pantalla |
 | 3 | Correo real a un familiar de prueba | núcleo de T09 | Mensaje recibido y enlace abre el caso |
-| 4 | Botón físico ESP32 → API pública | núcleo de T07 | Pulsación crea el mismo tipo de incidente |
+| 4 | Botón físico ESP32 → API pública | núcleo de T07 | Solo la doble pulsación válida crea el mismo tipo de incidente |
 | 5 | Pollar OTP | T05 | Usuario inicia sesión y accede solo a su caso |
 | 6 | Contrato simple en Stellar testnet y anclaje de apertura | núcleo de T13–T14 | `tx_hash` visible y asociado al incidente |
 | 7 | Chequeo diario de cinco preguntas, índice y cierre del caso | núcleo de T12 y T10 | Puntaje calculado en servidor, respuesta de alarma abre vía de ayuda y cronología queda cerrada |
@@ -412,7 +412,7 @@ El alcance demostrable debe ser **un ESP32 y un botón físico, 2–5 personas u
 |---|---|
 | Wi-Fi o energía caídos | Señal local de fallo, reintentos, prueba periódica de conexión; evaluar respaldo celular/batería tras D3 |
 | Correo tardío o no recibido | Estado por destinatario, reintentos, canal alterno y protocolo humano; no prometer entrega por Gmail |
-| Pulsación accidental o repetida | Pulsación sostenida, ventana de deduplicación y flujo de falsa alarma que no borra historial |
+| Pulsación accidental o repetida | Exigir dos pulsaciones separadas dentro de 3 segundos, debounce, enfriamiento local, deduplicación en servidor y flujo de falsa alarma que no borra historial; medir si el gesto resulta accesible |
 | Familiar no disponible | Definir familiar principal, suplente y plazo de escalamiento antes de piloto real |
 | Datos sensibles expuestos | Mínimo de datos, consentimiento, cifrado, permisos, auditoría y nada clínico en cadena |
 | Fallo de Stellar/Pollar | La alerta operativa continúa si falla Stellar; definir acceso alterno del familiar si falla login |

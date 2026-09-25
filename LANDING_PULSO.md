@@ -4,7 +4,7 @@
 
 ## 1. Posicionamiento y promesa
 
-**Pulso. Tu red de apoyo en dos toques.** Un botón físico en casa inicia una solicitud de ayuda; un familiar confirma que la atenderá. «Dos toques» describe las dos acciones humanas del flujo, no una pulsación doble del dispositivo. El prototipo actual es una simulación web: todavía no envía correos, no opera un centro de monitoreo ni contacta automáticamente al 911.
+**Pulso. Tu red de apoyo en dos toques.** La persona presiona **dos veces el botón físico** para pedir ayuda. Una sola pulsación, incluso por curiosidad o error, no genera ninguna alerta. Tras la segunda pulsación válida, la versión objetivo avisa a la red familiar; la confirmación de un familiar es un paso posterior, no uno de los dos toques del lema. **La demostración final será real con la ESP32**, pero la primera etapa local es una vista previa de la interfaz: todavía no envía correos, no opera un centro de monitoreo ni contacta automáticamente al 911.
 
 ### Mensaje principal
 
@@ -39,7 +39,7 @@ Tipografía: sistema sans, peso fuerte en titulares, texto de 18 px mínimo en e
 
 1. **Header:** P de Pulso, navegación Cómo funciona, Para familias, Datos, Seguridad; CTA Ver demostración.
 2. **Hero:** titular centrado en la coordinación familiar, lema literal, ilustración de tres estados (persona en casa → aviso → familiar confirma), CTA.
-3. **Cómo funciona:** botón físico de pulsación sostenida, aviso a red familiar, confirmación y seguimiento. Marcar futuros pasos como previstos.
+3. **Cómo funciona:** dos pulsaciones físicas separadas dentro de una ventana de 3 segundos, aviso a red familiar, confirmación y seguimiento. Una sola pulsación expira sin alerta. La ventana es un parámetro inicial que debe probarse con personas mayores y cuidadoras. Marcar los avisos futuros como previstos.
 4. **Para cada integrante:** persona que solicita ayuda, familiar, persona cuidadora; beneficios concretos.
 5. **Contexto CDMX/LATAM:** tres cifras con año, denominador y fuente enlazada; no usar datos de 2020 como si fueran actuales.
 6. **Seguimiento diario:** chequeo voluntario de bienestar, sin diagnóstico ni sustitución de atención médica.
@@ -53,13 +53,13 @@ Tipografía: sistema sans, peso fuerte en titulares, texto de 18 px mínimo en e
 
 **H1:** Más cerca cuando alguien necesita ayuda.
 
-**Subtítulo:** Un botón en casa y una red familiar que puede enterarse, confirmar quién responde y acompañar el día a día. **Tu red de apoyo en dos toques.**
+**Subtítulo:** Presiona dos veces el botón en casa para pedir ayuda. Tu red familiar podrá enterarse, confirmar quién responde y acompañar el día a día. **Tu red de apoyo en dos toques.**
 
 **CTA principal:** Ver demostración
 
-**Nota bajo CTA:** Demostración simulada. No envía alertas ni llama a emergencias.
+**Nota bajo CTA durante la primera etapa:** Vista previa interactiva. La demostración con ESP32 real se conectará al final.
 
-**Cómo funciona:** «1. La persona mantiene presionado el botón. 2. Pulso prepara un aviso para sus contactos elegidos. 3. Un familiar confirma que atenderá y el resto ve el estado». Los pasos 2 y 3 son diseño objetivo, aún sin integración operativa.
+**Cómo funciona:** «1. Presiona el botón una vez y suéltalo. 2. Presiónalo de nuevo dentro de 3 segundos para pedir ayuda. 3. Pulso avisará a los contactos elegidos; un familiar confirmará que atenderá». Una pulsación aislada no activa la alerta. El aviso y la confirmación son diseño objetivo, aún sin integración operativa.
 
 **Seguimiento:** «Una pregunta diaria puede abrir una conversación a tiempo. El chequeo voluntario muestra una tendencia de bienestar autodeclarado; no es una evaluación clínica».
 
@@ -67,7 +67,7 @@ Tipografía: sistema sans, peso fuerte en titulares, texto de 18 px mínimo en e
 
 ## 5. Demostración interactiva
 
-Ruta `/demo`. Estado inicial «Listo para simular»; control «Simular pulsación del botón»; pantalla de «Solicitud registrada en esta demo»; control «Simular confirmación familiar»; estado «Un familiar atenderá». El texto visible debe afirmar que no se creó un incidente real, que no se enviaron correos y que el 911 no recibió aviso. Ofrecer reiniciar. No pedir nombres ni teléfonos reales para la demo.
+Ruta `/demo`. **Primera etapa:** vista previa de interfaz. Estado inicial «Listo para simular»; primera pulsación simulada deja «Esperando segundo toque» **sin crear alerta**; segunda pulsación dentro de 3 segundos muestra «Solicitud registrada en la vista previa»; un control separado simula la confirmación familiar. Si pasan 3 segundos o se reinicia, vuelve a «Listo» sin alerta. El texto visible debe afirmar que no se creó un incidente real, que no se enviaron correos y que el 911 no recibió aviso. No pedir nombres ni teléfonos reales para la vista previa. **Última etapa:** sustituir los controles simulados por eventos reales de ESP32 → API → incidente → aviso y confirmación familiar verificados; entonces la página podrá llamarse demostración real.
 
 Rutas heredadas: `/ayuda`, `/chequeo`, `/contactos` comparten navegación y diseño accesible. `/ayuda` remite a la demo y 911; `/chequeo` explica el futuro chequeo sin captar datos de salud; `/contactos` explica el futuro registro y verificación.
 
@@ -85,7 +85,7 @@ Meta title: `Pulso | Tu red de apoyo en dos toques`. Meta description: `Conoce l
 
 Eventos propuestos, sin datos personales: `landing_demo_click`, `demo_started`, `demo_family_acknowledged`, `whitepaper_opened`. Medirlos solo con consentimiento y herramienta elegida en una fase posterior.
 
-La landing está lista cuando el CTA abre una demo operable por teclado, cada cifra cita una fuente y año, el flujo explica sus límites, y el diseño funciona en 360/768/1200 px.
+La landing está lista cuando el CTA abre una vista previa operable por teclado, cada cifra cita una fuente y año, el flujo explica sus límites, el white paper se puede descargar desde el sitio y el diseño funciona en 360/768/1200 px. La demostración real con ESP32 es un hito posterior a la landing.
 
 ## 8. Datos públicos para la narrativa
 
@@ -97,8 +97,8 @@ La landing está lista cuando el CTA abre una demo operable por teclado, cada ci
 
 | Componente | Estado revisado | Siguiente paso |
 |---|---|---|
-| Next.js | Inicio de panel básico y tres rutas estáticas | Landing, demo y sistema visual coherente |
-| ESP32 | Detecta pulsación sostenida, imprime por serial | HTTPS, autenticación, reintentos e idempotencia |
+| Next.js | Landing local, vista previa interactiva y rutas informativas | Revisión móvil/accesibilidad; conectar demostración real después |
+| ESP32 | Detecta dos pulsaciones separadas dentro de 3 segundos e imprime el evento por serial | HTTPS, autenticación, reintentos e idempotencia |
 | Correos | Dependencia declarada, sin flujo conectado | Proveedor transaccional, consentimiento y verificación |
 | Pollar | Propuesto en documentación, sin login visible | Integración y roles reales |
 | Stellar | README con interfaz prevista | Contrato, pruebas y despliegue en testnet |

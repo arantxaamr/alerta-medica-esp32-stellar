@@ -67,4 +67,4 @@ Por defecto el producto corre en **modo prueba** (identidad y domicilio de demo)
 - [Especificación de landing e identidad](./LANDING_PULSO.md)
 - [White paper y canvas de negocio](./WHITEPAPER_PULSO.md)
 
-La ruta `/` presenta Pulso a familias y personas cuidadoras; `/demo` simula la pulsación y la confirmación familiar. La demo no crea incidentes, envía correos ni contacta al 911.
+La ruta `/` presenta Pulso a familias y personas cuidadoras; `/demo` es una **vista previa temporal** de las dos pulsaciones físicas y la confirmación familiar posterior. Una sola pulsación no crea alerta. La demostración final deberá usar la ESP32 real, que se conectará después de terminar la landing. La vista previa actual no crea incidentes, envía correos ni contacta al 911.
