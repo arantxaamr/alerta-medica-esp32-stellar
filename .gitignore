@@ -29,6 +29,7 @@ Thumbs.db
 # firmware
 firmware/.pio/
 firmware/.vscode/
+firmware/**/secrets.h
 *.elf
 *.bin
 
