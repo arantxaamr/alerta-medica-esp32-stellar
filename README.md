@@ -6,6 +6,8 @@ Sistema de alerta y seguimiento para emergencias médicas familiares (ESP32 + Po
 
 ## Estructura
 
+El flujo de acceso por correo, consentimiento y vínculos familiares está descrito en [ACCESO_Y_VINCULOS.md](ACCESO_Y_VINCULOS.md).
+
 ```text
 apps/web/          Next.js (API + paneles persona/familiar)
 firmware/          Arduino ESP32-DevKit V1 (pulsador + LED)
@@ -31,35 +33,34 @@ PDR_TRD_*.md       Guía de producto y arquitectura
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-2. Completa `DATABASE_URL` (Supabase), claves Pollar, Resend y Stellar cuando las tengas.
+2. Completa `DATABASE_URL` (Supabase), Pollar, Resend, `SESSION_SECRET` y `ADMIN_EMAILS`. Las claves Stellar se usarán en una etapa posterior.
 
 3. Instala y prepara Prisma:
 
 ```bash
 cd apps/web
-npm install
-npx prisma generate
-npx prisma db push
-npm run db:seed
+pnpm install --frozen-lockfile
+pnpm exec prisma generate
+pnpm exec prisma db push
 ```
 
 4. Desarrollo local:
 
 ```bash
-npm run dev
+pnpm dev
 # o desde la raíz:
 # npm run dev
 ```
 
-Health check: [http://localhost:3000/api/health](http://localhost:3000/api/health)
+Health check: [http://localhost:3000/api/health](http://localhost:3000/api/health).
 
 ## Vercel
 
-En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables de entorno desde `.env.example`.
+En el proyecto de Vercel, configura **Root Directory** = `apps/web`. Variables de entorno desde `.env.example`. Autoriza el dominio HTTPS de Vercel en la aplicación Pollar antes de probar el acceso allí.
 
 ## Modo simulacro
 
-Por defecto el producto corre en **modo prueba** (identidad y domicilio de demo). El paso a datos reales queda para cuando el producto madure (consentimiento, aviso de privacidad y tickets T01–T02).
+Las alertas aún corren en **modo simulación**. El acceso puede registrar participantes reales que acepten el consentimiento del piloto, pero todavía no debe presentarse como servicio operativo de emergencias.
 
 ## Documentación y demostración
 

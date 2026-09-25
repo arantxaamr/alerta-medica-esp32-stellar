@@ -54,8 +54,9 @@ export default function Home() {
             <p className="hero-motto">Tu red de apoyo en dos toques.</p>
             <div className="hero-actions">
               <Link className="button button-primary" href="/demo">Ver demostración <span aria-hidden="true">↗</span></Link>
-              <a className="button button-quiet" href="#como-funciona">Cómo funciona <span aria-hidden="true">↓</span></a>
+              <Link className="button button-quiet" href="/acceso">Entrar al piloto <span aria-hidden="true">↗</span></Link>
             </div>
+            <a className="hero-scroll-link" href="#como-funciona">Descubre cómo funciona <span aria-hidden="true">↓</span></a>
             <p className="microcopy">Vista previa interactiva. La demostración con ESP32 real se conectará al final.</p>
           </div>
           <div className="hero-visual" role="img" aria-label="Ilustración del botón Pulso y un ejemplo de confirmación familiar">
